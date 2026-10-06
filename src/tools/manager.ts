@@ -90,6 +90,11 @@ import {
   type PermissionModeState,
 } from "./permission-mode-state";
 import {
+  beginRuntimeToolExecution,
+  finishRuntimeToolExecution,
+  type RuntimeToolExecutionStart,
+} from "./runtime-execution-control";
+import {
   captureSecretRedactions,
   createScrubbedOutputStreamer,
   getAmbientRedactionSecrets,
@@ -112,10 +117,13 @@ import { resolveBackendSpecificToolAssets } from "./task-tool-assets";
 import { TOOL_DEFINITIONS, type ToolName } from "./tool-definitions";
 import { getInternalToolName, getServerToolName } from "./tool-name-mapping";
 import {
-  beginRuntimeToolExecution,
-  finishRuntimeToolExecution,
-  type RuntimeToolExecutionStart,
-} from "./runtime-execution-control";
+  filterBuiltInToolNamesByClientAllowlist,
+  filterExternalToolsByClientAllowlist,
+  filterExternalToolsByRuntimeContext,
+  filterExternalToolsByScopeIds,
+  filterModToolsByClientAllowlist,
+  filterToolRegistryByClientAllowlist,
+} from "./tool-registry-filters";
 
 export { getInternalToolName, getServerToolName };
 
@@ -153,39 +161,6 @@ function runtimeExecutionReceiptFailure(
   };
 }
 
-function matchesClientToolAllowlistEntry(
-  allowSet: Set<string> | null,
-  serverToolName: string,
-  internalToolName?: string,
-): boolean {
-  if (!allowSet) {
-    return true;
-  }
-
-  return (
-    allowSet.has(serverToolName) ||
-    (internalToolName !== undefined && allowSet.has(internalToolName))
-  );
-}
-
-function filterBuiltInToolNamesByClientAllowlist(
-  toolNames: ToolName[],
-  clientToolAllowlist?: string[],
-): ToolName[] {
-  if (clientToolAllowlist === undefined) {
-    return toolNames;
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return toolNames.filter((toolName) =>
-    matchesClientToolAllowlistEntry(
-      allowSet,
-      getServerToolName(toolName),
-      toolName,
-    ),
-  );
-}
-
 const ARTIFACT_TOOL_NAMES: ToolName[] = [
   "read_artifact_file",
   "write_artifact_file",
@@ -218,96 +193,6 @@ function resolveArtifactToolNames(toolNames: ToolName[]): ToolName[] {
   }
 
   return [...withoutArtifactTools, ...ARTIFACT_TOOL_NAMES];
-}
-
-function filterExternalToolsByClientAllowlist(
-  externalTools: Map<string, ExternalToolDefinition>,
-  clientToolAllowlist?: string[],
-): Map<string, ExternalToolDefinition> {
-  if (clientToolAllowlist === undefined) {
-    return new Map(externalTools);
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return new Map(
-    Array.from(externalTools.entries()).filter(([internalName, tool]) =>
-      matchesClientToolAllowlistEntry(allowSet, tool.name, internalName),
-    ),
-  );
-}
-
-function filterToolRegistryByClientAllowlist(
-  registry: ToolRegistry,
-  clientToolAllowlist?: string[],
-): ToolRegistry {
-  if (clientToolAllowlist === undefined) {
-    return new Map(registry);
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return new Map(
-    Array.from(registry.entries()).filter(([internalName]) =>
-      matchesClientToolAllowlistEntry(
-        allowSet,
-        getServerToolName(internalName),
-        internalName,
-      ),
-    ),
-  );
-}
-
-function filterExternalToolsByRuntimeContext(
-  externalTools: Map<string, ExternalToolDefinition>,
-  runtimeContext: RuntimeContextSnapshot,
-): Map<string, ExternalToolDefinition> {
-  return new Map(
-    Array.from(externalTools.entries()).filter(([, tool]) => {
-      const matchesRuntime =
-        !tool.runtime ||
-        ((tool.runtime.agentId ?? null) === (runtimeContext.agentId ?? null) &&
-          tool.runtime.conversationId === runtimeContext.conversationId);
-      // An unscoped runtime tool belongs to its agent/conversation. The
-      // registration connection remains its execution return path, but turns
-      // for that runtime may originate from another connection or the process
-      // queue (for example, cron). Scoped tools remain connection-owned.
-      const matchesConnection =
-        tool.connectionId === undefined ||
-        tool.connectionId === runtimeContext.connectionId ||
-        (tool.runtime !== undefined && tool.scopeId === undefined);
-      return matchesRuntime && matchesConnection;
-    }),
-  );
-}
-
-function filterExternalToolsByScopeIds(
-  externalTools: Map<string, ExternalToolDefinition>,
-  externalToolScopeIds?: string[],
-): Map<string, ExternalToolDefinition> {
-  const selectedScopes = new Set(externalToolScopeIds ?? []);
-  return new Map(
-    Array.from(externalTools.entries()).filter(([, tool]) => {
-      if (tool.scopeId === undefined) {
-        return true;
-      }
-      return selectedScopes.has(tool.scopeId);
-    }),
-  );
-}
-
-function filterModToolsByClientAllowlist(
-  modTools: Map<string, ModToolDefinition>,
-  clientToolAllowlist?: string[],
-): Map<string, ModToolDefinition> {
-  if (clientToolAllowlist === undefined) {
-    return new Map(modTools);
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return new Map(
-    Array.from(modTools.entries()).filter(([name, tool]) =>
-      matchesClientToolAllowlistEntry(allowSet, tool.name, name),
-    ),
-  );
 }
 
 import { TOOLSET_CATALOG, WORKTREE_TOOL_NAMES } from "./toolset-catalog";
