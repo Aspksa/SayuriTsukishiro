@@ -1,30 +1,28 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.78  
-**Cognitive Core:** 0.21.0
+**Sayuri version:** 0.1.79  
+**Cognitive Core:** 0.22.0
 
-## Closed stage: Subagent Capability Leases
+## Closed stage: Subagent Evidence Handoff
 
-Subagents now have an explicit Sayuri capability boundary instead of inheriting
-the parent's effective tool approvals.
+Leased child-agent results can now enter the same durable evidence path used by
+ordinary controlled tools.
 
-A lease is bound to one parent task, one parent plan, one active parent step,
-one child identity, one workspace root and one explicit tool set. Read-only
-leases can grant only read tools. Scoped mutation leases can grant reads plus
-the narrow file mutation family; shell, task/lifecycle and destructive tools
-are rejected.
+The parent Execution Controller validates the lease against its current task,
+plan and active step, then validates the returned receipt identity: lease ID,
+child ID, task ID, step ID, source, execution ID, success outcome and derived
+trust must all match.
 
-The Letta subagent manager now exposes a restricted launch path that suppresses
-parent/session auto-approval inheritance. Sayuri uses that path and forces the
-exact `openai-compatible/DeepSeek-V4-Flash` model handle for newly launched
-leased children.
+Only the parent controller may append that receipt to the durable evidence store.
+After verification, the controller advances exactly the lease-bound active step,
+creates a parent checkpoint and persists the new task/plan state. A forged,
+failed, stale or mis-bound child result cannot advance the plan.
 
-A child result is returned with a parent task/step-bound evidence receipt. The
-child cannot directly mutate Sayuri task status, long-term goal status, parent
-plan status or approval state.
+This keeps subagents advisory/executive workers rather than owners of parent
+lifecycle authority.
 
 ## NEXT_ACTION
 
-**Integrate leased-subagent result receipts into the parent Sayuri Execution
-Controller and durable evidence store, so a child may advance only its bound
-active parent step; then add durable background execution leases.**
+**Add durable background execution leases with explicit ownership,
+deadline/expiry, restart recovery, cancellation, and exactly-once result handoff
+into the parent evidence verifier.**

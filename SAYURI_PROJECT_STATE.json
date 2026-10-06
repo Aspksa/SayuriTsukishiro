@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.78",
-  "milestone": "Subagent Capability Leases",
+  "version": "0.1.79",
+  "milestone": "Subagent Evidence Handoff",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "subagent-capability-leases",
-  "next_action": "Integrate leased-subagent result receipts into the parent Sayuri Execution Controller and durable evidence store, so a child may advance only its bound active parent step; then add durable background execution leases."
+  "current_stage": "subagent-evidence-handoff",
+  "next_action": "Add durable background execution leases with explicit ownership, deadline/expiry, restart recovery, cancellation, and exactly-once result handoff into the parent evidence verifier."
 }

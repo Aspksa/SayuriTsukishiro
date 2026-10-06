@@ -28,6 +28,10 @@ import {
   type SayuriVerificationResult,
   verifySayuriResult,
 } from "./result-verifier";
+import {
+  validateSayuriSubagentEvidenceReceipt,
+} from "./subagent-evidence";
+import type { SayuriSubagentCapabilityLease } from "./subagent-lease";
 import type { SayuriBrainStateStore } from "./state-store";
 import {
   checkpointSayuriTask,
@@ -387,6 +391,58 @@ export class SayuriExecutionController {
       .listForExecution(executionId)
       .map((receipt) => receipt.id);
     return verifySayuriResult({ executionId, receiptIds }, this.#ledger);
+  }
+
+  async checkpointSubagentReceipt(input: {
+    lease: SayuriSubagentCapabilityLease;
+    receipt: SayuriEvidenceReceipt;
+    summary: string;
+    nextAction: string;
+    createdAt?: string;
+  }): Promise<SayuriTaskState> {
+    validateSayuriSubagentEvidenceReceipt({
+      lease: input.lease,
+      receipt: input.receipt,
+      task: this.#task,
+      plan: this.#plan,
+      now: input.createdAt,
+    });
+    await this.appendReceipt(input.receipt);
+
+    const verification = verifySayuriResult(
+      {
+        executionId: input.receipt.executionId,
+        receiptIds: [input.receipt.id],
+        minimumTrust: "derived",
+      },
+      this.#ledger,
+    );
+    if (verification.verdict !== "verified") {
+      throw new Error(
+        `Cannot checkpoint leased subagent result: ${verification.reason}`,
+      );
+    }
+
+    const progression = progressSayuriPlanFromVerifiedStep({
+      plan: this.#plan,
+      stepId: input.lease.parentStepId,
+      receiptIds: [input.receipt.id],
+    });
+    this.#plan = progression.plan;
+    this.#task = checkpointSayuriTask(this.#task, {
+      id: `checkpoint-${randomUUID()}`,
+      createdAt: input.createdAt ?? new Date().toISOString(),
+      summary: input.summary,
+      nextAction:
+        progression.nextStep?.intent ??
+        progression.nextStep?.title ??
+        (progression.planComplete
+          ? "Verify overall task completion."
+          : input.nextAction),
+      verifiedReceiptIds: [input.receipt.id],
+    });
+    await this.persistState();
+    return this.task;
   }
 
   async checkpointToolCall(input: {

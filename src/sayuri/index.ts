@@ -26,3 +26,4 @@ export * from "./task-recovery";
 export * from "./version";
 export * from "./subagent-lease";
 export * from "./subagent-runtime";
+export * from "./subagent-evidence";
