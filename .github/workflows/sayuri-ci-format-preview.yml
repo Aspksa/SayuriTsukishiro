@@ -1,0 +1,32 @@
+name: Sayuri PR Format Preview (Temporary)
+on:
+  push:
+    branches:
+      - sayuri/cognitive-core-foundation
+permissions:
+  contents: read
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/sayuri/cognitive-core-foundation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Generate formatted files without committing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          mapfile -d '' -t files < <(git diff --name-only --diff-filter=ACMRT -z origin/main...HEAD -- src | grep -zE '\.(ts|tsx|js|jsx)$' || true)
+          if (( ${#files[@]} )); then
+            bunx --bun @biomejs/biome@2.2.5 check --write --max-diagnostics=200 "${files[@]}" || true
+          fi
+          node -e 'const fs=require("node:fs"), cp=require("node:child_process"); const changed=cp.execFileSync("git",["diff","--name-only","-z","--","src"]).toString("utf8").split("\u0000").filter(Boolean); console.log("SAYURI_FMT_TOTAL="+changed.length); for(const path of changed){if(!fs.existsSync(path) || !fs.statSync(path).isFile())continue; const b=fs.readFileSync(path).toString("base64"); console.log("SAYURI_FMT_FILE="+path); for(let i=0;i<b.length;i+=1800)console.log("SAYURI_FMT_CHUNK="+b.slice(i,i+1800)); console.log("SAYURI_FMT_END"); }'
