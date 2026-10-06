@@ -27,6 +27,7 @@ import {
   checkpointSayuriTask,
   type SayuriTaskState,
 } from "./task-lifecycle";
+import { resolveSayuriWorkspaceSandbox } from "./workspace-sandbox";
 
 const READ_ONLY_TOOLS = new Set([
   "Glob",
@@ -280,11 +281,20 @@ export class SayuriExecutionController {
     }
 
     const risk = classifySayuriToolRisk(grant.toolName);
-    if (risk !== "project-mutation") {
+    const sandboxMatchesScope =
+      grant.workspaceSandbox !== undefined &&
+      resolve(grant.workspaceSandbox.root) === this.#scopeRoot &&
+      isWithinRoot(this.#scopeRoot, grant.workingDirectory);
+    const bridgeable =
+      risk === "project-mutation" ||
+      (risk === "system-mutation" && sandboxMatchesScope);
+    if (!bridgeable) {
       return {
         decision: "deny" as const,
         reason:
-          "Automatic approval bridging is currently limited to scoped project mutations.",
+          risk === "system-mutation"
+            ? "System mutation requires an active Sayuri workspace sandbox."
+            : "Automatic approval bridging is limited to scoped project/system mutations.",
       };
     }
 
@@ -295,7 +305,10 @@ export class SayuriExecutionController {
       args: grant.args,
       workingDirectory: grant.workingDirectory,
     };
-    if (!requestInsideScope(syntheticRequest, this.#scopeRoot)) {
+    if (
+      risk === "project-mutation" &&
+      !requestInsideScope(syntheticRequest, this.#scopeRoot)
+    ) {
       return {
         decision: "deny" as const,
         reason: "Approved mutation is outside the Sayuri workspace scope.",
@@ -325,7 +338,8 @@ export class SayuriExecutionController {
     this.registerAuthorization({
       toolCallId: grant.toolCallId,
       stepId: selected.id,
-      scopeApproved: true,
+      scopeApproved:
+        risk === "project-mutation" ? true : sandboxMatchesScope,
       approvalGranted: true,
       toolName: grant.toolName,
       argsFingerprint: fingerprintArgs(grant.args),
@@ -569,11 +583,13 @@ export function runWithSayuriExecutionController<T>(
   controller: SayuriExecutionController,
   fn: () => T,
 ): T {
+  const { sandbox } = resolveSayuriWorkspaceSandbox(controller.scopeRoot);
   return runWithRuntimeContext(
     {
       workingDirectory: controller.scopeRoot,
       permissionMode: "standard",
       toolExecutionControl: controller.runtimeControl,
+      ...(sandbox ? { workspaceSandbox: sandbox } : {}),
     },
     fn,
   );

@@ -48,6 +48,7 @@ export interface RuntimeToolApprovalGrant {
   toolName: string;
   args: Readonly<Record<string, unknown>>;
   workingDirectory: string;
+  workspaceSandbox?: RuntimeWorkspaceSandbox;
 }
 
 export interface RuntimeToolApprovalDecision {

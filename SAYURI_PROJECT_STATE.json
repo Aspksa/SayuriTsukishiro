@@ -1,38 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.61",
-  "milestone": "One-shot Approval Bridge",
-  "base_runtime": {
-    "name": "Letta Code",
-    "imported_version": "0.34.4"
-  },
+  "version": "0.1.62",
+  "milestone": "Default-on Workspace Sandbox",
+  "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "modules": {
-    "cognitive_core": "0.5.0",
-    "model_gateway": "0.1.0",
-    "action_broker": "0.3.0",
-    "execution_control": "0.4.0",
-    "brain_state_store": "0.1.0",
-    "turn_context": "0.1.0",
-    "approval_bridge": "0.1.0",
-    "task_lifecycle": "0.3.0",
-    "planner_contract": "0.2.0",
-    "evidence_ledger": "0.3.0",
-    "result_verifier": "0.2.0",
-    "permissions_profile": "0.1.0"
-  },
-  "completed": [
-    "existing human approval can be presented to the runtime execution control before executeTool",
-    "Sayuri maps approval to exactly one executable plan step or fails closed",
-    "approved tool name and arguments are bound to the authorization",
-    "approval grants are one-shot and replay attempts are denied",
-    "auto-bridge is limited to project mutations with an in-scope file path",
-    "shell authority remains blocked until sandbox hardening"
-  ],
-  "current_stage": "approval-bridge-complete",
-  "next_action": "Make workspace sandboxing default-on for Sayuri shell execution, then allow system-mutation approval bridging only when the sandbox is active."
+  "current_stage": "workspace-sandbox-hardened",
+  "next_action": "Route Cloud.ru DeepSeek-V4-Flash through the Sayuri Model Gateway at the primary model-resolution boundary, with no provider/model fallback."
 }

@@ -156,6 +156,7 @@ async function executeSingleDecision(
       isStderr?: boolean,
     ) => void;
     toolContextId?: string;
+    workingDirectory?: string;
     parentScope?: { agentId: string; conversationId: string };
     onFileWrite?: (filePath: string, content: string) => void;
   },
@@ -209,16 +210,20 @@ async function executeSingleDecision(
         parsedArgs = decision.approval.toolArgs || {};
       }
 
-      const runtimeControl = options?.toolContextId
+      const executionRuntimeContext = options?.toolContextId
         ? getExecutionContextById(options.toolContextId)?.runtimeContext
-            .toolExecutionControl
         : undefined;
+      const runtimeControl = executionRuntimeContext?.toolExecutionControl;
       if (runtimeControl?.grantApproval) {
         const grant = await runtimeControl.grantApproval({
           toolCallId: decision.approval.toolCallId,
           toolName: decision.approval.toolName,
           args: parsedArgs,
-          workingDirectory: getCurrentWorkingDirectory(),
+          workingDirectory:
+            options?.workingDirectory ?? getCurrentWorkingDirectory(),
+          ...(executionRuntimeContext?.workspaceSandbox
+            ? { workspaceSandbox: executionRuntimeContext.workspaceSandbox }
+            : {}),
         });
         if (grant.decision !== "allow") {
           const reason =
