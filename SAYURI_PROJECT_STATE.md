@@ -1,27 +1,43 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.69  
-**Cognitive Core:** 0.13.0
+**Sayuri version:** 0.1.70  
+**Cognitive Core:** 0.14.0
 
-## Closed stage: Planner Runtime Adapter
+## Closed stage: Project Work Orchestrator
 
-Planner v1 is now connected to the exact Sayuri model route.
+Sayuri now has one deterministic entry point for project work.
 
-The runtime configures Cloud.ru through the existing local credential store,
-resolves only `openai-compatible/DeepSeek-V4-Flash`, sends one proposal prompt,
-accepts text only as strict JSON, parses it through the Planner v1 proposal
-boundary, and deterministically compiles risk/evidence requirements.
+The orchestrator first attempts durable unfinished-task recovery. Only when no
+unfinished task exists does it select the next eligible long-term goal and call
+Planner Runtime.
 
-A new task is persisted only after all of those checks succeed. Its lifecycle is
-stored as `ready`; Planner Runtime never creates an execution controller and
-never grants approval or tool authority.
+For new work the order is intentionally strict:
 
-Malformed JSON, authority fields, identity mismatches, invalid dependencies, and
-invalid compiled plans fail before the state store receives a runnable plan.
+```
+eligible goal
+  ↓
+Planner Runtime → strict JSON → deterministic compiled plan
+  ↓
+persist task as ready
+  ↓
+link task ID to long-term goal
+  ↓
+explicit ready → running transition
+  ↓
+persist again
+  ↓
+bootstrap primary execution controller
+```
+
+If a failure occurs after planning, the ready/running task is already durable
+and project-indexed, so restart recovery continues the same task instead of
+creating duplicate work.
+
+Planner Runtime is never invoked when unfinished work exists.
 
 ## NEXT_ACTION
 
-**Build a Project Work Orchestrator that first recovers unfinished work;
-otherwise selects an eligible long-term goal, invokes Planner Runtime, links the
-persisted task to the goal, transitions `ready -> running` explicitly, and
-only then creates the primary execution controller.**
+**Add deterministic Plan Progression: a verified tool result must complete
+exactly its bound in-progress step, attach receipt IDs, unlock only
+dependency-satisfied next steps, persist the updated plan/task, and never let
+the LLM mark work complete.**

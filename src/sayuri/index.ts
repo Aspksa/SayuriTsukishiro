@@ -13,6 +13,7 @@ export * from "./session";
 export * from "./state-store";
 export * from "./turn-context";
 export * from "./workspace-sandbox";
+export * from "./work-orchestrator";
 export * from "./task-lifecycle";
 export * from "./task-registry";
 export * from "./task-recovery";
