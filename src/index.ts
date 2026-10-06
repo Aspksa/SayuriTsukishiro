@@ -573,10 +573,8 @@ async function main(): Promise<void> {
   markMilestone("CLI_START");
   installSayuriCronAdmission();
   await initializeDesktopCredentials();
-
   // Exit when the owning Desktop or terminal process dies.
   startOrphanDetection();
-
   const rawCliArgs = process.argv.slice(2);
   let subcommandArgs = rawCliArgs;
   let explicitBackendMode: BackendMode | undefined;

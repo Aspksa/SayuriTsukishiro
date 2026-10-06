@@ -18,6 +18,7 @@ export interface SayuriLeasedSubagentResult {
 
 export async function runSayuriLeasedSubagent(input: {
   lease: SayuriSubagentCapabilityLease;
+  spawnSubagent?: typeof spawnRestrictedSubagent;
   task: SayuriTaskState;
   plan: SayuriPlan;
   prompt: string;
@@ -35,7 +36,7 @@ export async function runSayuriLeasedSubagent(input: {
     now,
   });
 
-  const result = await spawnRestrictedSubagent({
+  const result = await (input.spawnSubagent ?? spawnRestrictedSubagent)({
     type: input.lease.subagentType,
     prompt: input.prompt,
     subagentId: input.lease.subagentId,

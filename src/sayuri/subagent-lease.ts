@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import { classifySayuriToolRisk } from "./execution-control";
+import { classifySayuriToolRisk } from "./tool-risk";
 import type { SayuriPlan } from "./planner";
 import type { SayuriTaskState } from "./task-lifecycle";
 

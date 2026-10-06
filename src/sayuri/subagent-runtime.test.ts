@@ -1,16 +1,4 @@
-import { describe, expect, test, mock } from "bun:test";
-
-mock.module("@/agent/subagents/manager", () => ({
-  spawnRestrictedSubagent: async (input: {
-    allowedTools: readonly string[];
-    model?: string;
-  }) => ({
-    agentId: "child-agent",
-    conversationId: "child-conversation",
-    report: `tools=${input.allowedTools.join(",")};model=${input.model}`,
-    success: true,
-  }),
-}));
+import { describe, expect, test } from "bun:test";
 
 const { runSayuriLeasedSubagent } = await import("./subagent-runtime");
 const { createSayuriSubagentCapabilityLease } = await import("./subagent-lease");
@@ -58,6 +46,12 @@ describe("Sayuri leased subagent runtime", () => {
       task,
       plan,
       prompt: "Inspect safely.",
+      spawnSubagent: async (input) => ({
+        agentId: "child-agent",
+        conversationId: "child-conversation",
+        report: `tools=${input.allowedTools.join(",")};model=${input.model}`,
+        success: true,
+      }),
       now: "2026-10-06T11:42:05.000Z",
     });
 

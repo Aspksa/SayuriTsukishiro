@@ -152,7 +152,8 @@ export async function finalizeSayuriSessionTask(input: {
       })
     : undefined;
 
-  if (goalState === "active" && goalId) {
+  if (goalState === "active") {
+    if (!goalId) throw new Error("Active Sayuri goal has no identifier.");
     return {
       kind: "goal-still-active",
       taskId,
