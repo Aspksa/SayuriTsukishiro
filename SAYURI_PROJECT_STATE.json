@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.75",
-  "milestone": "Task Finalizer",
+  "version": "0.1.76",
+  "milestone": "Cognitive Loop Supervisor",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "task-finalizer",
-  "next_action": "Build the Cognitive Loop Supervisor: turn verified checkpoints into deterministic continue/finalize/wait decisions, recover after restart, and keep one active project task without giving the LLM lifecycle authority."
+  "current_stage": "cognitive-loop-supervisor",
+  "next_action": "Add deterministic Plan Step Intent Enforcement: bind read-only execution to the exact active planner tool family/intent, deny unrelated reads from advancing the plan, and introduce a controlled step retry/failure policy with receipts before subagents/background execution."
 }

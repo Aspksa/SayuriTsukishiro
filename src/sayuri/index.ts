@@ -1,5 +1,6 @@
 export * from "./action-broker";
 export * from "./completion-gate";
+export * from "./cognitive-loop-supervisor";
 export * from "./evidence-ledger";
 export * from "./execution-control";
 export * from "./goal-manager";

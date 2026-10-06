@@ -140,6 +140,14 @@ export async function recoverLatestSayuriSessionForProject(input: {
   const inner = input.stateStore ?? new FileSayuriBrainStateStore();
   const registry = input.taskRegistry ?? new FileSayuriTaskRegistry();
   const entries = await registry.listProjectTasks(input.projectId);
+  const unfinishedEntries = entries.filter(
+    (entry) => !isTerminalSayuriTaskStatus(entry.status),
+  );
+  if (unfinishedEntries.length > 1) {
+    throw new Error(
+      `Project "${input.projectId}" has multiple unfinished Sayuri tasks: ${unfinishedEntries.map((entry) => entry.taskId).join(", ")}.`,
+    );
+  }
 
   for (const entry of entries) {
     if (isTerminalSayuriTaskStatus(entry.status)) continue;

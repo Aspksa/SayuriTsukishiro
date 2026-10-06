@@ -1,27 +1,38 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.75  
-**Cognitive Core:** 0.18.0
+**Sayuri version:** 0.1.76  
+**Cognitive Core:** 0.19.0
 
-## Closed stage: Task Finalizer
+## Closed stage: Cognitive Loop Supervisor
 
-The final checkpoint can now flow through one deterministic finalization path.
+Sayuri now has a deterministic project-level loop supervisor.
 
-The finalizer runs the task Completion Gate, requires the completed state to be
-reflected in the project registry, finds the unique long-term goal linked to the
-task, evaluates Goal Success Verification, and then asks the Project Work
-Orchestrator for the next recoverable or eligible unit of work.
+The supervisor enforces one unfinished project task at a time. Multiple
+unfinished tasks are reported as a conflict instead of being silently ranked or
+chosen by the model. The same invariant is enforced in restart recovery.
 
-If all linked tasks are complete but explicit textual success criteria are still
-unconfirmed, the goal is moved to `blocked` with an evidence-wait reason. That
-prevents the orchestrator from generating duplicate tasks for the same goal.
-Blocked goals may still pass Goal Success Verification later after the required
-user-confirmation evidence is recorded.
+For an active session:
 
-The model still cannot set task status, goal status, or evidence authority.
+- a verified checkpoint with an unlocked in-progress plan step moves
+  `checkpointed -> running`;
+- a terminal plan enters the Task Finalizer / Completion Gate path;
+- a plan with no executable step is reported as blocked instead of inventing a
+  lifecycle transition;
+- restart recovery re-enters the same decision path through durable task state.
+
+This closes the first deterministic loop:
+
+```
+goal → planner → durable task → controlled tool
+ → receipt → verifier → checkpoint → plan progression
+ → continue OR completion gate → goal success → next work
+```
+
+The LLM proposes structure and content; lifecycle transitions remain code-owned.
 
 ## NEXT_ACTION
 
-**Build the Cognitive Loop Supervisor: turn verified checkpoints into
-deterministic continue/finalize/wait decisions, recover after restart, and keep
-one active project task without giving the LLM lifecycle authority.**
+**Add deterministic Plan Step Intent Enforcement: bind read-only execution to
+the exact active planner tool family/intent, deny unrelated reads from
+advancing the plan, and introduce a controlled step retry/failure policy with
+receipts before subagents/background execution.**
