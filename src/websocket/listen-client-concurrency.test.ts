@@ -2042,10 +2042,11 @@ describe("listen-client multi-worker concurrency", () => {
     expect(sentMessages).toEqual([
       expect.objectContaining({
         role: "user",
-        content: "hello",
         otid: "cm-user-otid",
       }),
     ]);
+    // Standard permission mode prepends a safety reminder as a text part.
+    expect(JSON.stringify(sentMessages)).toContain("hello");
   });
 
   test("secret_apply refreshes the next user payload for the same conversation", async () => {

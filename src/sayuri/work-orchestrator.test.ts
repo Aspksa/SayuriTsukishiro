@@ -45,8 +45,10 @@ function sse(content: string): Response {
 
 describe("Sayuri Project Work Orchestrator", () => {
   const roots: string[] = [];
+  const servers: Array<{ stop(force?: boolean): void }> = [];
 
   afterEach(async () => {
+    for (const server of servers.splice(0)) server.stop(true);
     await Promise.all(
       roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
@@ -60,10 +62,13 @@ describe("Sayuri Project Work Orchestrator", () => {
     const scopeRoot = join(root, "workspace");
     await mkdir(scopeRoot, { recursive: true });
     const requests: string[] = [];
-    const runtime = new LocalPiModelsRuntime({
-      storageDir: providerStorage,
-      fetchImpl: (async (request: string | URL | Request) => {
-        const url = new URL(String(request));
+    // Discovery and chat streaming use different pi-ai fetch paths.
+    // A loopback server prevents any real Cloud.ru request during tests.
+    const server = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      fetch(request) {
+        const url = new URL(request.url);
         requests.push(url.pathname);
         if (url.pathname === "/v1/models") {
           return Response.json({
@@ -74,8 +79,11 @@ describe("Sayuri Project Work Orchestrator", () => {
           return sse(plannerJson);
         }
         return new Response("not found", { status: 404 });
-      }) as typeof fetch,
+      },
     });
+    servers.push(server);
+    const runtime = new LocalPiModelsRuntime({ storageDir: providerStorage });
+    const baseUrl = `http://127.0.0.1:${server.port}/v1`;
     return {
       stateStore: new FileSayuriBrainStateStore(stateRoot),
       taskRegistry: new FileSayuriTaskRegistry(stateRoot),
@@ -84,6 +92,7 @@ describe("Sayuri Project Work Orchestrator", () => {
       scopeRoot,
       runtime,
       requests,
+      baseUrl,
     };
   }
 
@@ -123,7 +132,7 @@ describe("Sayuri Project Work Orchestrator", () => {
       goalStore: env.goalStore,
       modelsRuntime: env.runtime,
       modelGateway: {
-        baseUrl: "https://cloud.example.test/v1",
+        baseUrl: env.baseUrl,
         apiKey: "cloud-key",
         storageDir: env.providerStorage,
       },
@@ -189,7 +198,7 @@ describe("Sayuri Project Work Orchestrator", () => {
       goalStore: env.goalStore,
       modelsRuntime: env.runtime,
       modelGateway: {
-        baseUrl: "https://cloud.example.test/v1",
+        baseUrl: env.baseUrl,
         apiKey: "cloud-key",
         storageDir: env.providerStorage,
       },
@@ -214,7 +223,7 @@ describe("Sayuri Project Work Orchestrator", () => {
       goalStore: env.goalStore,
       modelsRuntime: env.runtime,
       modelGateway: {
-        baseUrl: "https://cloud.example.test/v1",
+        baseUrl: env.baseUrl,
         apiKey: "cloud-key",
         storageDir: env.providerStorage,
       },

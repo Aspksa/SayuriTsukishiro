@@ -409,7 +409,7 @@ describe("buildSubagentArgs", () => {
     expect(args).not.toContain("--no-memfs");
   });
 
-  test("subagents always use unrestricted permission mode", () => {
+  test("subagents use standard permission mode", () => {
     const args = buildSubagentArgs(
       "test-subagent",
       {
@@ -421,7 +421,7 @@ describe("buildSubagentArgs", () => {
     );
 
     expect(args).toContain("--permission-mode");
-    expect(args[args.indexOf("--permission-mode") + 1]).toBe("unrestricted");
+    expect(args[args.indexOf("--permission-mode") + 1]).toBe("standard");
   });
 
   test("caps reflection system prompt plus initial message to startup budget", () => {

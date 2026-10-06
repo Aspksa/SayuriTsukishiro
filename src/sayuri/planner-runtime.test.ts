@@ -43,8 +43,10 @@ function ssePlannerResponse(content: string): Response {
 
 describe("Sayuri Planner runtime", () => {
   const roots: string[] = [];
+  const servers: Array<{ stop(force?: boolean): void }> = [];
 
   afterEach(async () => {
+    for (const server of servers.splice(0)) server.stop(true);
     await Promise.all(
       roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
@@ -56,10 +58,14 @@ describe("Sayuri Planner runtime", () => {
     const providerStorage = join(root, "provider");
     const stateStore = new FileSayuriBrainStateStore(join(root, "state"));
     const requests: string[] = [];
-    const runtime = new LocalPiModelsRuntime({
-      storageDir: providerStorage,
-      fetchImpl: (async (request: string | URL | Request) => {
-        const url = new URL(String(request));
+    // Use a real loopback HTTP server for both model discovery and streaming.
+    // Pi-AI's stream transport uses fetch independently of catalog discovery;
+    // injecting fetchImpl alone does not mock a chat completion.
+    const server = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      fetch(request) {
+        const url = new URL(request.url);
         requests.push(url.pathname);
         if (url.pathname === "/v1/models") {
           return Response.json({
@@ -70,9 +76,12 @@ describe("Sayuri Planner runtime", () => {
           return ssePlannerResponse(responseText);
         }
         return new Response("not found", { status: 404 });
-      }) as typeof fetch,
+      },
     });
-    return { providerStorage, stateStore, runtime, requests };
+    servers.push(server);
+    const runtime = new LocalPiModelsRuntime({ storageDir: providerStorage });
+    const baseUrl = `http://127.0.0.1:${server.port}/v1`;
+    return { providerStorage, stateStore, runtime, requests, baseUrl };
   }
 
   const seed: SayuriPlannerSeed = {
@@ -112,7 +121,7 @@ describe("Sayuri Planner runtime", () => {
       stateStore: env.stateStore,
       modelsRuntime: env.runtime,
       modelGateway: {
-        baseUrl: "https://cloud.example.test/v1",
+        baseUrl: env.baseUrl,
         apiKey: "cloud-key",
         storageDir: env.providerStorage,
       },
@@ -143,7 +152,7 @@ describe("Sayuri Planner runtime", () => {
         stateStore: env.stateStore,
         modelsRuntime: env.runtime,
         modelGateway: {
-          baseUrl: "https://cloud.example.test/v1",
+          baseUrl: env.baseUrl,
           apiKey: "cloud-key",
           storageDir: env.providerStorage,
         },
@@ -175,7 +184,7 @@ describe("Sayuri Planner runtime", () => {
         seed,
         modelsRuntime: env.runtime,
         modelGateway: {
-          baseUrl: "https://cloud.example.test/v1",
+          baseUrl: env.baseUrl,
           apiKey: "cloud-key",
           storageDir: env.providerStorage,
         },

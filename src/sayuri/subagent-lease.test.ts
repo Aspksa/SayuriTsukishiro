@@ -44,7 +44,7 @@ describe("Sayuri subagent capability leases", () => {
       allowedTools: ["Read", "Grep"],
       scopeRoot: "/workspace",
       issuedAt: "2026-10-06T11:40:04.000Z",
-      expiresAt: "2026-10-06T12:40:04.000Z",
+      expiresAt: "2099-10-06T12:40:04.000Z",
     });
     expect(() =>
       assertSayuriSubagentLeaseBinding({
@@ -98,14 +98,14 @@ describe("Sayuri subagent capability leases", () => {
       allowedTools: ["Read"],
       scopeRoot: "/workspace",
       issuedAt: "2026-10-06T11:40:00.000Z",
-      expiresAt: "2026-10-06T11:41:00.000Z",
+      expiresAt: "2099-10-06T11:41:00.000Z",
     });
     expect(() =>
       assertSayuriSubagentLeaseBinding({
         lease,
         task: runningTask(),
         plan,
-        now: "2026-10-06T11:42:00.000Z",
+        now: "2099-10-06T11:42:00.000Z",
       }),
     ).toThrow("expired");
   });

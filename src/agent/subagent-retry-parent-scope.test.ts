@@ -9,7 +9,7 @@ const managerSource = readFileSync(
 
 test("initial launch and all retries preserve the parent's conversation", () => {
   expect(managerSource).toContain(
-    "resolvedParentConversationId,\n    clientMessageId,\n  );",
+    "resolvedParentConversationId,\n    clientMessageId,\n    inheritParentToolApprovals,\n  );",
   );
   expect(
     managerSource.match(
