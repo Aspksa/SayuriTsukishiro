@@ -3,6 +3,7 @@ export * from "./completion-gate";
 export * from "./evidence-ledger";
 export * from "./execution-control";
 export * from "./goal-manager";
+export * from "./goal-success";
 export * from "./model-gateway";
 export * from "./model-runtime";
 export * from "./module-versions";

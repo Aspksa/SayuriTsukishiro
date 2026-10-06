@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.72",
-  "milestone": "Completion Gate",
+  "version": "0.1.73",
+  "milestone": "Goal Success Verification",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "completion-gate",
-  "next_action": "Add Goal Success Verification: after a task completes, evaluate the linked long-term goal from deterministic task status plus explicit success-criteria evidence; only verified criteria may transition an active goal to completed."
+  "current_stage": "goal-success-verification",
+  "next_action": "Add a deterministic Task Finalizer that, after the final plan checkpoint, runs the Completion Gate, updates the project task registry, evaluates the linked goal through Goal Success Verification, and then asks the work orchestrator for the next recoverable/eligible unit of work."
 }

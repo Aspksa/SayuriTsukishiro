@@ -1,24 +1,29 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.72  
-**Cognitive Core:** 0.16.0
+**Sayuri version:** 0.1.73  
+**Cognitive Core:** 0.17.0
 
-## Closed stage: Completion Gate
+## Closed stage: Goal Success Verification
 
-Task completion is now a deterministic evidence gate.
+Long-term goals can no longer become completed merely because a model says the
+work looks finished.
 
-A task may leave `checkpointed` only when every plan step is completed or
-cancelled. Every completed evidence-bearing step must reference receipts that
-exist, belong to the same task and step, succeeded, and include direct evidence.
+A goal completion evaluation now requires every linked task to exist in the same
+project registry and have deterministic lifecycle status `completed`.
+Additionally, every textual success criterion must have durable explicit
+user-confirmation evidence. Evidence is project/goal/criterion scoped and stored
+separately from model output.
 
-The controller persists the intermediate `verifying` state before transitioning
-to `completed`. If the process stops between those writes, restart recovery can
-resume from `verifying` without re-granting execution authority.
+Goals with no textual success criteria still require at least one linked,
+completed task. Failed, cancelled, waiting, running, or missing tasks keep the
+goal active.
 
-Neither Planner output nor model prose can set a task to completed.
+Only after the Goal Success Gate passes may the goal transition to
+`completed`.
 
 ## NEXT_ACTION
 
-**Add Goal Success Verification: after a task completes, evaluate the linked
-long-term goal from deterministic task status plus explicit success-criteria
-evidence; only verified criteria may transition an active goal to completed.**
+**Add a deterministic Task Finalizer that, after the final plan checkpoint,
+runs the Completion Gate, updates the project task registry, evaluates the
+linked goal through Goal Success Verification, and then asks the work
+orchestrator for the next recoverable/eligible unit of work.**
