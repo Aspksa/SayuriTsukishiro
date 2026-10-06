@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.71",
-  "milestone": "Deterministic Plan Progression",
+  "version": "0.1.72",
+  "milestone": "Completion Gate",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "deterministic-plan-progression",
-  "next_action": "Add the Completion Gate: only when every plan step is completed/cancelled and all evidence-bearing steps have verified receipts may the task transition checkpointed->verifying->completed and the linked long-term goal be evaluated for completion."
+  "current_stage": "completion-gate",
+  "next_action": "Add Goal Success Verification: after a task completes, evaluate the linked long-term goal from deterministic task status plus explicit success-criteria evidence; only verified criteria may transition an active goal to completed."
 }

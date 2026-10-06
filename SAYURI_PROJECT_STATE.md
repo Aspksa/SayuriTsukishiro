@@ -1,29 +1,24 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.71  
-**Cognitive Core:** 0.15.0
+**Sayuri version:** 0.1.72  
+**Cognitive Core:** 0.16.0
 
-## Closed stage: Deterministic Plan Progression
+## Closed stage: Completion Gate
 
-Verified tool execution now advances the plan in code rather than by model
-assertion.
+Task completion is now a deterministic evidence gate.
 
-A checkpoint must resolve to exactly one bound plan step. That step must be
-`in-progress`. Mutation steps must carry verified receipt IDs. The step is
-marked `completed`, receipts are attached, and only the first pending step
-whose dependencies are already completed becomes `in-progress`.
+A task may leave `checkpointed` only when every plan step is completed or
+cancelled. Every completed evidence-bearing step must reference receipts that
+exist, belong to the same task and step, succeeded, and include direct evidence.
 
-Planner-generated read steps are now bound to their matching in-progress Read
-tool call, so read evidence can advance a real plan without mutation approval.
-Unbound reads may still execute under the read-only policy, but they cannot be
-used to checkpoint/complete a planned step.
+The controller persists the intermediate `verifying` state before transitioning
+to `completed`. If the process stops between those writes, restart recovery can
+resume from `verifying` without re-granting execution authority.
 
-The checkpoint next action is taken from the newly unlocked plan step when one
-exists. The model cannot directly set plan step status to completed.
+Neither Planner output nor model prose can set a task to completed.
 
 ## NEXT_ACTION
 
-**Add the Completion Gate: only when every plan step is completed/cancelled and
-all evidence-bearing steps have verified receipts may the task transition
-`checkpointed -> verifying -> completed` and the linked long-term goal be
-evaluated for completion.**
+**Add Goal Success Verification: after a task completes, evaluate the linked
+long-term goal from deterministic task status plus explicit success-criteria
+evidence; only verified criteria may transition an active goal to completed.**

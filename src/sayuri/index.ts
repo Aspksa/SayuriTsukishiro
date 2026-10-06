@@ -1,4 +1,5 @@
 export * from "./action-broker";
+export * from "./completion-gate";
 export * from "./evidence-ledger";
 export * from "./execution-control";
 export * from "./goal-manager";

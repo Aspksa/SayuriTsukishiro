@@ -11,6 +11,7 @@ import {
   decideSayuriAction,
   type SayuriActionRisk,
 } from "./action-broker";
+import { evaluateSayuriCompletionGate } from "./completion-gate";
 import {
   SayuriEvidenceLedger,
   type SayuriEvidenceKind,
@@ -441,6 +442,29 @@ export class SayuriExecutionController {
     now: string = new Date().toISOString(),
   ): Promise<SayuriTaskState> {
     this.#task = transitionSayuriTask(this.#task, nextStatus, now);
+    await this.persistState();
+    return this.task;
+  }
+
+  async completeTaskIfReady(
+    now: string = new Date().toISOString(),
+  ): Promise<SayuriTaskState> {
+    const gate = evaluateSayuriCompletionGate(this.#plan, this.#ledger);
+    if (!gate.ready) {
+      throw new Error(
+        `Sayuri Completion Gate rejected task completion: ${gate.reasons.join(" ")}`,
+      );
+    }
+    if (this.#task.status === "checkpointed") {
+      this.#task = transitionSayuriTask(this.#task, "verifying", now);
+      await this.persistState();
+    }
+    if (this.#task.status !== "verifying") {
+      throw new Error(
+        `Task completion requires checkpointed/verifying state, got "${this.#task.status}".`,
+      );
+    }
+    this.#task = transitionSayuriTask(this.#task, "completed", now);
     await this.persistState();
     return this.task;
   }
