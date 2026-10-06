@@ -1,35 +1,30 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.77  
-**Cognitive Core:** 0.20.0
+**Sayuri version:** 0.1.78  
+**Cognitive Core:** 0.21.0
 
-## Closed stage: Plan Step Intent & Retry Enforcement
+## Closed stage: Subagent Capability Leases
 
-Tool execution can no longer advance a plan merely because the tool is broadly
-read-only or because a matching mutation exists somewhere later in the plan.
+Subagents now have an explicit Sayuri capability boundary instead of inheriting
+the parent's effective tool approvals.
 
-An execution receipt is bound to a plan step only when the step is currently
-`in-progress` and names the exact tool being executed. Unrelated reads remain
-available as harmless exploratory actions inside scope, but they are unbound and
-cannot checkpoint or complete planned work.
+A lease is bound to one parent task, one parent plan, one active parent step,
+one child identity, one workspace root and one explicit tool set. Read-only
+leases can grant only read tools. Scoped mutation leases can grant reads plus
+the narrow file mutation family; shell, task/lifecycle and destructive tools
+are rejected.
 
-Human approval bridging is now restricted to exactly one active planned tool
-step. Pending/future mutation steps cannot consume an approval early, and every
-mutating retry needs a fresh one-shot approval.
+The Letta subagent manager now exposes a restricted launch path that suppresses
+parent/session auto-approval inheritance. Sayuri uses that path and forces the
+exact `openai-compatible/DeepSeek-V4-Flash` model handle for newly launched
+leased children.
 
-Step failures also have deterministic retry budgets by risk. Repeated direct
-errors eventually transition the task to `failed`, persist that state, and
-block further execution. A later task for the same long-term goal may succeed:
-historical failed/cancelled task attempts no longer permanently prevent goal
-success, provided at least one linked task completes successfully.
-
-Strict optional-time propagation in recovery/orchestration/finalization was also
-normalized so callers never pass an implicit undefined timestamp into lifecycle
-transitions.
+A child result is returned with a parent task/step-bound evidence receipt. The
+child cannot directly mutate Sayuri task status, long-term goal status, parent
+plan status or approval state.
 
 ## NEXT_ACTION
 
-**Add subagent capability leases: each child agent is bound to one parent
-task/plan step, receives only an explicit read-only or narrowly approved tool
-set, cannot mutate parent lifecycle/goal state, and must return evidence
-receipts to the parent verifier.**
+**Integrate leased-subagent result receipts into the parent Sayuri Execution
+Controller and durable evidence store, so a child may advance only its bound
+active parent step; then add durable background execution leases.**

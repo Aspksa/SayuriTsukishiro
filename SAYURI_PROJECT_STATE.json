@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.77",
-  "milestone": "Plan Step Intent & Retry Enforcement",
+  "version": "0.1.78",
+  "milestone": "Subagent Capability Leases",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "plan-step-intent-and-retries",
-  "next_action": "Add subagent capability leases: each child agent is bound to one parent task/plan step, receives only an explicit read-only or narrowly approved tool set, cannot mutate parent lifecycle/goal state, and must return evidence receipts to the parent verifier."
+  "current_stage": "subagent-capability-leases",
+  "next_action": "Integrate leased-subagent result receipts into the parent Sayuri Execution Controller and durable evidence store, so a child may advance only its bound active parent step; then add durable background execution leases."
 }

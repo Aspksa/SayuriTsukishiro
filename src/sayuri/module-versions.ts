@@ -1,5 +1,5 @@
 export const SAYURI_MODULE_VERSIONS = {
-  cognitiveCore: "0.20.0",
+  cognitiveCore: "0.21.0",
   modelGateway: "0.2.0",
   modelRuntime: "0.4.0",
   primarySession: "0.4.0",
@@ -23,6 +23,8 @@ export const SAYURI_MODULE_VERSIONS = {
   plannerRuntime: "0.2.0",
   planProgression: "0.2.0",
   planStepPolicy: "0.1.0",
+  subagentLease: "0.1.0",
+  subagentRuntime: "0.1.0",
   evidenceLedger: "0.5.0",
   resultVerifier: "0.3.0",
   permissionsProfile: "0.1.0",

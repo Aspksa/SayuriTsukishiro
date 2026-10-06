@@ -111,6 +111,8 @@ function isProviderNotSupportedError(errorOutput: string): boolean {
 
 interface BuildSubagentArgsOptions {
   backendMode?: BackendMode;
+  /** When false, child auto-approvals come only from its explicit config. */
+  inheritParentToolApprovals?: boolean;
   promptTransport?: "argv" | "stdin";
   /** Runtime platform override for launcher tests. */
   platform?: NodeJS.Platform;
@@ -225,8 +227,14 @@ export function buildSubagentArgs(
   // Build list of auto-approved tools:
   // 1. Inherit from parent (CLI + session rules)
   // 2. Add subagent's allowed tools (so they don't hang on approvals)
-  const parentAllowedTools = cliPermissions.getAllowedTools();
-  const sessionAllowRules = sessionPermissions.getRules().allow || [];
+  const inheritParentToolApprovals =
+    options.inheritParentToolApprovals ?? true;
+  const parentAllowedTools = inheritParentToolApprovals
+    ? cliPermissions.getAllowedTools()
+    : [];
+  const sessionAllowRules = inheritParentToolApprovals
+    ? sessionPermissions.getRules().allow || []
+    : [];
   const subagentTools =
     config.allowedTools !== "all" && Array.isArray(config.allowedTools)
       ? config.allowedTools
@@ -291,6 +299,7 @@ async function executeSubagent(
   parentAgentName?: string | null,
   parentConversationId?: string,
   clientMessageId?: string,
+  inheritParentToolApprovals = true,
 ): Promise<SubagentResult> {
   const withModel = (result: SubagentResult): SubagentResult =>
     model ? { ...result, model } : result;
@@ -342,6 +351,7 @@ async function executeSubagent(
         systemPromptOverride,
         environment,
         clientMessageId,
+        inheritParentToolApprovals,
       },
     );
 
@@ -836,6 +846,7 @@ async function spawnSubagentInContext(
   actingUserId?: string,
   resolvedConfig?: SubagentConfig,
   clientMessageId?: string,
+  inheritParentToolApprovals = true,
 ): Promise<SubagentResult> {
   const launchActingUserId = resolveActingUserId(actingUserId);
   let config = resolvedConfig ?? (await getAllSubagentConfigs())[type];
@@ -981,9 +992,67 @@ async function spawnSubagentInContext(
     parentAgent?.name,
     resolvedParentConversationId,
     clientMessageId,
+    inheritParentToolApprovals,
   );
 
   return result;
+}
+
+export async function spawnRestrictedSubagent(input: {
+  type: string;
+  prompt: string;
+  subagentId: string;
+  allowedTools: readonly string[];
+  model?: string;
+  signal?: AbortSignal;
+  maxTurns?: number;
+  parentAgentId?: string;
+  parentConversationId?: string;
+}): Promise<SubagentResult> {
+  if (input.allowedTools.length === 0) {
+    throw new Error("Restricted subagent requires at least one explicit tool.");
+  }
+  const configs = await getAllSubagentConfigs();
+  const base = configs[input.type];
+  if (!base) {
+    return {
+      agentId: "",
+      report: "",
+      success: false,
+      error: `Unknown subagent type: ${input.type}`,
+    };
+  }
+  const config: SubagentConfig = {
+    ...base,
+    allowedTools: [...new Set(input.allowedTools)],
+    recommendedModel: input.model ?? base.recommendedModel,
+    ...(input.model
+      ? { recommendedModelSource: "user" as const }
+      : base.recommendedModelSource
+        ? { recommendedModelSource: base.recommendedModelSource }
+        : {}),
+  };
+  return spawnSubagentInContext(
+    input.type,
+    input.prompt,
+    input.model,
+    input.subagentId,
+    input.signal,
+    undefined,
+    undefined,
+    input.maxTurns,
+    false,
+    input.parentAgentId,
+    undefined,
+    input.parentConversationId,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    config,
+    undefined,
+    false,
+  );
 }
 
 export function spawnSubagent(

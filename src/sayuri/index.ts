@@ -24,3 +24,5 @@ export * from "./task-finalizer";
 export * from "./task-registry";
 export * from "./task-recovery";
 export * from "./version";
+export * from "./subagent-lease";
+export * from "./subagent-runtime";
