@@ -1,25 +1,27 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.74  
-**Cognitive Core:** 0.17.1
+**Sayuri version:** 0.1.75  
+**Cognitive Core:** 0.18.0
 
-## Closed stage: Provider Stream Build Repair
+## Closed stage: Task Finalizer
 
-GitHub Actions exposed a syntax defect in the exact-model route integration:
-`exactModelSelectionForTurn` had been inserted as a free function inside the
-`PiStreamAdapter` class body.
+The final checkpoint can now flow through one deterministic finalization path.
 
-The helper is now a private class method and both model-resolution call sites use
-`this.exactModelSelectionForTurn(...)`. This restores valid TypeScript/Bun
-syntax without changing the exact Cloud.ru model policy.
+The finalizer runs the task Completion Gate, requires the completed state to be
+reflected in the project registry, finds the unique long-term goal linked to the
+task, evaluates Goal Success Verification, and then asks the Project Work
+Orchestrator for the next recoverable or eligible unit of work.
 
-The failure was observed in the wheel build on Windows at
-`src/backend/dev/pi-stream-adapter.ts:535`; the same source defect affected all
-wheel platforms.
+If all linked tasks are complete but explicit textual success criteria are still
+unconfirmed, the goal is moved to `blocked` with an evidence-wait reason. That
+prevents the orchestrator from generating duplicate tasks for the same goal.
+Blocked goals may still pass Goal Success Verification later after the required
+user-confirmation evidence is recorded.
+
+The model still cannot set task status, goal status, or evidence authority.
 
 ## NEXT_ACTION
 
-**Add a deterministic Task Finalizer that, after the final plan checkpoint,
-runs the Completion Gate, updates the project task registry, evaluates the
-linked goal through Goal Success Verification, and then asks the work
-orchestrator for the next recoverable/eligible unit of work.**
+**Build the Cognitive Loop Supervisor: turn verified checkpoints into
+deterministic continue/finalize/wait decisions, recover after restart, and keep
+one active project task without giving the LLM lifecycle authority.**

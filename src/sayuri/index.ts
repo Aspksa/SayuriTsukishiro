@@ -18,6 +18,7 @@ export * from "./turn-context";
 export * from "./workspace-sandbox";
 export * from "./work-orchestrator";
 export * from "./task-lifecycle";
+export * from "./task-finalizer";
 export * from "./task-registry";
 export * from "./task-recovery";
 export * from "./version";

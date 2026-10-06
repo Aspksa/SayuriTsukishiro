@@ -174,9 +174,9 @@ export async function evaluateSayuriGoalSuccess(input: {
   evidenceStore: SayuriGoalEvidenceStore;
 }): Promise<SayuriGoalSuccessEvaluation> {
   const reasons: string[] = [];
-  if (input.goal.status !== "active") {
+  if (input.goal.status !== "active" && input.goal.status !== "blocked") {
     reasons.push(
-      `Goal must be active for completion evaluation, got "${input.goal.status}".`,
+      `Goal must be active/blocked for completion evaluation, got "${input.goal.status}".`,
     );
   }
   if (input.goal.taskIds.length === 0) {
