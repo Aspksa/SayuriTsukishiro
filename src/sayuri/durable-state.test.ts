@@ -51,6 +51,7 @@ describe("Sayuri durable brain state", () => {
         {
           id: "write-step",
           title: "Write verified state",
+          toolName: "Write",
           status: "in-progress" as const,
           risk: "project-mutation" as const,
           requiresEvidence: true,
@@ -162,6 +163,9 @@ describe("Sayuri durable brain state", () => {
       ),
     );
     expect(second.status).toBe("error");
-    expect(String(second.toolReturn)).toContain("Approval is required");
+    expect(String(second.toolReturn)).toContain(
+      "Action is not attached to a validated plan step",
+    );
+    expect(await Bun.file(join(workDir, "second.txt")).exists()).toBe(false);
   });
 });
