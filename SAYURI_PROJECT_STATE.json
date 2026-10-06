@@ -1,0 +1,32 @@
+{
+  "project": "Sayuri Tsukishiro",
+  "version": "0.1.57",
+  "milestone": "Cognitive Core Foundation",
+  "base_runtime": {
+    "name": "Letta Code",
+    "imported_version": "0.34.4",
+    "policy": "preserve proven runtime components; Sayuri owns cognition and product policy"
+  },
+  "model_policy": {
+    "provider": "cloud.ru",
+    "model": "DeepSeek-V4-Flash",
+    "automatic_fallbacks": false
+  },
+  "modules": {
+    "cognitive_core": "0.1.0",
+    "model_gateway": "0.1.0",
+    "action_broker": "0.1.0",
+    "task_lifecycle": "0.1.0",
+    "planner_contract": "0.1.0",
+    "evidence_ledger": "0.1.0",
+    "result_verifier": "0.1.0"
+  },
+  "current_stage": "foundation-created",
+  "next_stage": [
+    "wire Action Broker into the real tool execution boundary",
+    "replace unrestricted defaults for Sayuri execution paths",
+    "persist execution receipts and task checkpoints",
+    "route Cloud.ru through the Sayuri Model Gateway without provider fallback",
+    "add planner and verifier integration to the turn lifecycle"
+  ]
+}
