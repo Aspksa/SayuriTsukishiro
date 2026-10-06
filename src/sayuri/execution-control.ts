@@ -407,7 +407,16 @@ export class SayuriExecutionController {
       plan: this.#plan,
       now: input.createdAt,
     });
-    await this.appendReceipt(input.receipt);
+    const existingReceipt = this.#ledger.get(input.receipt.id);
+    if (existingReceipt) {
+      if (JSON.stringify(existingReceipt) !== JSON.stringify(input.receipt)) {
+        throw new Error(
+          `Subagent evidence receipt "${input.receipt.id}" conflicts with durable evidence.`,
+        );
+      }
+    } else {
+      await this.appendReceipt(input.receipt);
+    }
 
     const verification = verifySayuriResult(
       {

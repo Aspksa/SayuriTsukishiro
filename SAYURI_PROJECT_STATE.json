@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.79",
-  "milestone": "Subagent Evidence Handoff",
+  "version": "0.1.80",
+  "milestone": "Durable Background Execution Leases",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "subagent-evidence-handoff",
-  "next_action": "Add durable background execution leases with explicit ownership, deadline/expiry, restart recovery, cancellation, and exactly-once result handoff into the parent evidence verifier."
+  "current_stage": "durable-background-execution-leases",
+  "next_action": "Add Background Work Supervisor integration: surface orphaned/completed/expired leases to the cognitive loop, auto-handoff completed results before new planning, never auto-relaunch orphaned mutations, and only resume explicitly safe read-only leases."
 }
