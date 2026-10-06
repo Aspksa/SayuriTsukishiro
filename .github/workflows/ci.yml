@@ -23,6 +23,7 @@ jobs:
     outputs:
       release_bump_only: ${{ steps.classify.outputs.release_bump_only }}
       run_heavy_ci: ${{ steps.classify.outputs.run_heavy_ci }}
+      run_letta_live_api: ${{ steps.letta_api.outputs.enabled }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -80,6 +81,22 @@ jobs:
 
           echo "title=$TITLE"
           printf 'changed_files=%s\n' "$CHANGED_FILES"
+
+      # Imported Letta Cloud integration tests require a live API key and
+      # may spend paid tokens. Sayuri uses only DeepSeek-V4-Flash via Cloud.ru.
+      # Keep these tests opt-in; never make absent credentials look like a pass.
+      - name: Detect optional imported Letta API prerequisites
+        id: letta_api
+        env:
+          LETTA_API_KEY: ${{ secrets.LETTA_API_KEY }}
+          ENABLE_LETTA_LIVE_TESTS: ${{ vars.SAYURI_ENABLE_LETTA_LIVE_TESTS }}
+        run: |
+          if [ "${ENABLE_LETTA_LIVE_TESTS:-}" = "true" ] && [ -n "${LETTA_API_KEY:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Letta live API tests skipped::Requires explicit opt-in and LETTA_API_KEY; unit, type, package and smoke checks remain active."
+          fi
 
   check:
     name: Lint & Type Check
@@ -176,9 +193,9 @@ jobs:
 
   integration:
     needs: classify
-    # Keep API credentials out of fork and Dependabot jobs. Unit and package
-    # verification still run for those contributors on every platform.
-    if: ${{ needs.classify.outputs.run_heavy_ci == 'true' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository)) }}
+    # Run imported live Letta API tests only when explicitly opted in and
+    # credentials are available; do not bill or fail Sayuri by default.
+    if: ${{ needs.classify.outputs.run_heavy_ci == 'true' && needs.classify.outputs.run_letta_live_api == 'true' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository)) }}
     name: API / ${{ matrix.runner }} / ${{ matrix.shard }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
