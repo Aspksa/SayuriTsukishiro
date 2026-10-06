@@ -6,6 +6,7 @@ export * from "./model-runtime";
 export * from "./module-versions";
 export * from "./planner";
 export * from "./result-verifier";
+export * from "./session";
 export * from "./state-store";
 export * from "./turn-context";
 export * from "./workspace-sandbox";

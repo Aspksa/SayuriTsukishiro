@@ -1,15 +1,14 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.63",
-  "milestone": "Exact Cloud.ru Model Route",
+  "version": "0.1.64",
+  "milestone": "Primary Session Bootstrap",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
-    "runtime_provider_type": "openai-compatible",
     "runtime_model_handle": "openai-compatible/DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "exact-model-route-integrated",
-  "next_action": "Create a primary Sayuri session bootstrap that configures/verifies Cloud.ru, creates or resumes durable task state, binds the execution controller, and starts each turn through withSayuriTurnOptions."
+  "current_stage": "primary-session-bootstrap",
+  "next_action": "Add a durable project-scoped task registry that indexes active, waiting, checkpointed, completed, failed, and cancelled Sayuri tasks and can recover unfinished work by project after restart."
 }

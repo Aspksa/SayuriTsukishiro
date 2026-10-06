@@ -1,46 +1,43 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.63  
-**Cognitive Core:** 0.7.0
+**Sayuri version:** 0.1.64  
+**Cognitive Core:** 0.8.0
 
-## Closed stage: Exact Cloud.ru Model Route
+## Closed stage: Primary Session Bootstrap
 
-Sayuri now owns an exact model route above the imported provider catalog.
+Sayuri now has one bootstrap path that assembles the previously separate
+safety and cognition components into a primary working session.
 
-The public policy remains **Cloud.ru → DeepSeek-V4-Flash**. At the lower runtime
-boundary Cloud.ru is represented by the existing OpenAI-compatible provider and
-the exact handle `openai-compatible/DeepSeek-V4-Flash`.
+Bootstrap order:
 
 ```
-Sayuri Model Gateway
+validate session identity
       ↓
-Cloud.ru credentials + Base URL
+configure Cloud.ru credential/base URL
       ↓
-local provider auth store
+verify exact DeepSeek-V4-Flash model
       ↓
-RuntimeModelRoute (exact)
+load durable task state
+      ├─ exists → resume task/plan/evidence
+      └─ absent → create planning → ready → running task
       ↓
-ProviderTurnInput snapshot
+bind SayuriExecutionController
       ↓
-Pi model resolution
+withSayuriTurnOptions
       ↓
-DeepSeek-V4-Flash only
+sendMessageStreamWithBackend
 ```
 
-The turn captures the model route before provider streaming starts, so async
-stream iteration cannot lose the routing policy. Exact OpenAI-compatible model
-resolution supplies no fallback model ID. If Cloud.ru does not publish
-`DeepSeek-V4-Flash` at the configured endpoint, verification fails closed.
+Every session turn now forces the exact runtime model handle in both the request
+surface and the captured runtime model route. A caller attempting to substitute
+another model is rejected.
 
-API keys are persisted only through the existing local provider credential
-store. Sayuri descriptors expose a masked key and project-state files contain no
-secret.
-
-The upstream multi-provider catalog remains present for compatibility, but it is
-not the authority for Sayuri-controlled turns.
+Durable resume does not silently replace the existing task goal or plan.
+Cloud.ru credentials remain in the local provider credential store and are not
+written into Sayuri task state.
 
 ## NEXT_ACTION
 
-**Create a primary Sayuri session bootstrap that configures/verifies Cloud.ru,
-creates or resumes durable task state, binds the execution controller, and
-starts each turn through `withSayuriTurnOptions`.**
+**Add a durable project-scoped task registry that indexes active, waiting,
+checkpointed, completed, failed, and cancelled Sayuri tasks and can recover
+unfinished work by project after restart.**

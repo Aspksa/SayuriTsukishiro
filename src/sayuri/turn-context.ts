@@ -1,7 +1,10 @@
 import type { SendMessageStreamOptions } from "@/agent/message";
 import type { RuntimeContextSnapshot } from "@/runtime-context";
 import type { SayuriExecutionController } from "./execution-control";
-import { buildSayuriRuntimeModelRoute } from "./model-runtime";
+import {
+  buildSayuriRuntimeModelRoute,
+} from "./model-runtime";
+import { SAYURI_RUNTIME_MODEL_HANDLE } from "./model-gateway";
 import { resolveSayuriWorkspaceSandbox } from "./workspace-sandbox";
 
 /**
@@ -36,8 +39,18 @@ export function withSayuriTurnOptions(
     conversationId: string;
   },
 ): SendMessageStreamOptions {
+  if (
+    options.overrideModel !== undefined &&
+    options.overrideModel !== SAYURI_RUNTIME_MODEL_HANDLE
+  ) {
+    throw new Error(
+      `Sayuri turn cannot override model "${options.overrideModel}". Expected "${SAYURI_RUNTIME_MODEL_HANDLE}".`,
+    );
+  }
+
   return {
     ...options,
+    overrideModel: SAYURI_RUNTIME_MODEL_HANDLE,
     workingDirectory: options.workingDirectory ?? input.controller.scopeRoot,
     agentId: options.agentId ?? input.agentId ?? undefined,
     runtimeContext: {
