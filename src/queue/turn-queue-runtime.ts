@@ -1,0 +1,116 @@
+import type { MessageCreate } from "@letta-ai/letta-client/resources/agents/agents";
+
+type MessageContentParts = Exclude<MessageCreate["content"], string>;
+
+export type QueuedTurnInput<TUserContent> =
+  | {
+      kind: "user";
+      content: TUserContent;
+    }
+  | {
+      kind: "task_notification";
+      text: string;
+      content?: MessageCreate["content"];
+    }
+  | {
+      kind: "cron_prompt";
+      text: string;
+    };
+
+type MergeQueuedTurnInputOptions<TUserContent> = {
+  normalizeUserContent: (content: TUserContent) => MessageCreate["content"];
+  separatorText?: string;
+};
+
+function stringifyUnexpectedContent(content: unknown): string {
+  try {
+    return JSON.stringify(content) ?? String(content);
+  } catch {
+    return String(content);
+  }
+}
+
+function appendContentParts(
+  target: MessageContentParts,
+  content: MessageCreate["content"],
+): void {
+  if (typeof content === "string") {
+    target.push({ type: "text", text: content });
+    return;
+  }
+
+  if (!Array.isArray(content)) {
+    if (content === null || content === undefined) return;
+    target.push({ type: "text", text: stringifyUnexpectedContent(content) });
+    return;
+  }
+
+  target.push(...content);
+}
+
+function escapeResultText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+export function buildTaskNotificationContent(item: {
+  text: string;
+  content?: MessageCreate["content"];
+}): MessageCreate["content"] {
+  if (item.content === undefined) return item.text;
+  const parts: MessageContentParts = [
+    { type: "text", text: item.text },
+    { type: "text", text: "\n<external-tool-result>" },
+  ];
+  const content =
+    typeof item.content === "string"
+      ? [{ type: "text" as const, text: item.content }]
+      : item.content;
+  for (const part of content) {
+    parts.push(
+      part.type === "text"
+        ? { type: "text", text: `<text>${escapeResultText(part.text)}</text>` }
+        : part,
+    );
+  }
+  parts.push({ type: "text", text: "</external-tool-result>" });
+  return parts;
+}
+
+export function mergeQueuedTurnInput<TUserContent>(
+  queued: QueuedTurnInput<TUserContent>[],
+  options: MergeQueuedTurnInputOptions<TUserContent>,
+): MessageCreate["content"] | null {
+  if (queued.length === 0) {
+    return null;
+  }
+
+  const separatorText = options.separatorText ?? "\n";
+
+  const mergedParts: MessageContentParts = [];
+  let isFirst = true;
+
+  for (const item of queued) {
+    if (!isFirst) {
+      mergedParts.push({ type: "text", text: separatorText });
+    }
+    isFirst = false;
+
+    if (item.kind === "task_notification") {
+      appendContentParts(mergedParts, buildTaskNotificationContent(item));
+      continue;
+    }
+    if (item.kind === "cron_prompt") {
+      mergedParts.push({ type: "text", text: item.text });
+      continue;
+    }
+
+    appendContentParts(mergedParts, options.normalizeUserContent(item.content));
+  }
+
+  return mergedParts.length > 0
+    ? (mergedParts as MessageCreate["content"])
+    : null;
+}

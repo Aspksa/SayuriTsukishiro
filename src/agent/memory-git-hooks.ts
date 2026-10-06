@@ -1,0 +1,297 @@
+/**
+ * Git hook scripts installed into agent and shared memory repositories.
+ *
+ * The pre-commit hook validates memory markdown frontmatter; the post-commit
+ * hook mirrors commits to an optional user-configured memory-repository
+ * remote. Both are (re)installed by the CLI harness on clone/pull/init —
+ * see memory-git.ts.
+ */
+
+import { spawnSync } from "node:child_process";
+import { chmodSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { validateMemoryFileFrontmatter } from "@/memory-frontmatter";
+import { debugLog } from "@/utils/debug";
+import {
+  MEMORY_CONSTRAINTS_CONFIG_PATH,
+  MEMORY_CONSTRAINTS_VALIDATOR_NAME,
+  MEMORY_CONSTRAINTS_VALIDATOR_SCRIPT,
+} from "./memory-constraints";
+
+const MEMORY_LAYOUT_POLICY = "letta-memory-layout-policy";
+type MemoryLayoutPolicy = "legacy-only" | "root-marker" | "shared-memory";
+
+/**
+ * Bash pre-commit hook that validates frontmatter in memory .md files.
+ *
+ * Rules:
+ * - Frontmatter is REQUIRED (must start with ---)
+ * - Must be properly closed with ---
+ * - Required fields: description (non-empty string)
+ * - read_only is a PROTECTED field: agent cannot add, remove, or change it.
+ *   Files where HEAD has read_only: true cannot be modified at all.
+ * - Only allowed agent-editable key: description
+ * - Legacy key 'limit' is tolerated for backward compatibility
+ * - read_only may exist (from server) but agent must not change it
+ * - Optional file-size and depth constraints come from .memfs.config.json
+ */
+export function buildPreCommitHookScript(
+  options: {
+    execPath?: string;
+    electron?: boolean;
+    platform?: NodeJS.Platform;
+  } = {},
+): string {
+  const execPath = options.execPath ?? process.execPath;
+  const platform = options.platform ?? process.platform;
+  // Git for Windows executes hooks with Bash, which resolves /c/... rather
+  // than the native C:\... path returned by process.execPath.
+  const bashPath =
+    platform === "win32"
+      ? execPath
+          .replaceAll("\\", "/")
+          .replace(
+            /^([A-Za-z]):\//,
+            (_match, drive: string) => `/${drive.toLowerCase()}/`,
+          )
+      : execPath;
+  const quotedPath = `'${bashPath.replaceAll("'", `'"'"'`)}'`;
+  const electron = options.electron ?? Boolean(process.versions.electron);
+
+  return `#!/usr/bin/env bash
+# Validate frontmatter in staged memory .md files
+# Installed by Letta Code CLI
+
+errors=""
+memory_files=()
+
+run_memory_node() {
+  ${electron ? "ELECTRON_RUN_AS_NODE=1 " : ""}${quotedPath} "$@"
+}
+
+memory_layout_policy_file="$(git rev-parse --git-common-dir 2>/dev/null)/${MEMORY_LAYOUT_POLICY}"
+memory_layout_policy=$(cat "$memory_layout_policy_file" 2>/dev/null || true)
+
+validate_memory_constraints() {
+  if { [ "$memory_layout_policy" = "root-marker" ] && \
+       { git cat-file -e ":MEMORY.md" 2>/dev/null || \
+         git cat-file -e "HEAD:MEMORY.md" 2>/dev/null; }; } || \
+     git cat-file -e ":${MEMORY_CONSTRAINTS_CONFIG_PATH}" 2>/dev/null || \
+     git cat-file -e "HEAD:${MEMORY_CONSTRAINTS_CONFIG_PATH}" 2>/dev/null; then
+    run_memory_node "$(git rev-parse --git-common-dir)/hooks/${MEMORY_CONSTRAINTS_VALIDATOR_NAME}" || exit $?
+  fi
+}
+
+validate_memory_files() {
+  [ "$1" = "legacy" ] && [ "\${#memory_files[@]}" -eq 0 ] && return
+  local result
+  result=$(run_memory_node - "$1" "$memory_layout_policy" "\${memory_files[@]}" <<'LETTA_MEMORY_FRONTMATTER'
+const { execFileSync, spawnSync } = require("node:child_process");
+const validateMemoryFileFrontmatter = ${validateMemoryFileFrontmatter.toString()};
+const [format, policy, ...stagedPaths] = process.argv.slice(2);
+try {
+  // MemFS v2 validates the complete staged tree, not just changed files. Read
+  // paths from Git inside the child instead of passing them through argv: Git
+  // Bash on Windows cannot launch Node with a sufficiently large path list.
+  const paths = format === "memfs-v2"
+    ? execFileSync("git", ["ls-files", "-z", "*.md"], { encoding: "utf8", maxBuffer: Infinity, stdio: ["ignore", "pipe", "pipe"] }).split("\\0").filter(Boolean)
+    : stagedPaths;
+  for (const path of paths) {
+    if (format === "memfs-v2") {
+      if (path.startsWith("skills/")) continue;
+      if (policy === "root-marker") {
+        let slash = path.lastIndexOf("/");
+        let projected = true;
+        while (slash >= 0) {
+          const index = ":" + path.slice(0, slash) + "/MEMORY.md";
+          if (spawnSync("git", ["cat-file", "-e", index], { stdio: "ignore" }).status !== 0) {
+            projected = false;
+            break;
+          }
+          slash = path.lastIndexOf("/", slash - 1);
+        }
+        if (!projected) continue;
+      }
+    }
+    const content = execFileSync("git", ["show", ":" + path], { encoding: "utf8", maxBuffer: Infinity, stdio: ["ignore", "pipe", "pipe"] });
+    let previousContent = null;
+    if (format === "legacy") {
+      const previous = spawnSync("git", ["show", "HEAD:" + path], { encoding: "utf8", maxBuffer: Infinity, stdio: ["ignore", "pipe", "pipe"] });
+      if (previous.error) throw previous.error;
+      if (previous.status === 0) previousContent = previous.stdout;
+    }
+    const errors = validateMemoryFileFrontmatter({ path, content, previousContent, format });
+    for (const error of errors) console.log("  " + error);
+  }
+} catch {
+  console.error("Memory validation could not read Git contents. No files were committed.");
+  process.exit(1);
+}
+LETTA_MEMORY_FRONTMATTER
+  ) || exit $?
+  if [ -n "$result" ]; then
+    errors="$errors\\n$result"
+  fi
+}
+
+use_v2_validation=false
+case "$memory_layout_policy" in
+  shared-memory) use_v2_validation=true ;;
+  root-marker)
+    if git cat-file -e ":MEMORY.md" 2>/dev/null || \
+       git cat-file -e "HEAD:MEMORY.md" 2>/dev/null; then
+      use_v2_validation=true
+    fi
+    ;;
+esac
+
+if [ "$use_v2_validation" = "true" ]; then
+  for file in $(git diff --cached --name-only --diff-filter=ACMR | grep -E '^skills/[^/]+\\.md$' || true); do
+    errors="$errors\\n  $file: invalid skill path (skills must be folders). Use skills/<name>/SKILL.md"
+  done
+
+  validate_memory_files "memfs-v2"
+
+  if [ -n "$errors" ]; then
+    echo "Memory validation failed:"
+    echo -e "$errors"
+    exit 1
+  fi
+  validate_memory_constraints
+  exit 0
+fi
+
+# Skills must always be directories: skills/<name>/SKILL.md
+# Reject legacy flat skill files (both current and legacy repo layouts).
+for file in $(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(memory/)?skills/[^/]+\\.md$' || true); do
+  errors="$errors\\n  $file: invalid skill path (skills must be folders). Use skills/<name>/SKILL.md"
+done
+
+# Match .md files under system/ or reference/ (with optional memory/ prefix).
+# Skip skill SKILL.md files — they use a different frontmatter format.
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '^(memory/)?(system|reference)/.*\\.md$'); do
+  memory_files+=("$file")
+done
+validate_memory_files "legacy"
+
+if [ -n "$errors" ]; then
+  echo "Frontmatter validation failed:"
+  echo -e "$errors"
+  exit 1
+fi
+validate_memory_constraints
+`;
+}
+
+export const PRE_COMMIT_HOOK_SCRIPT = buildPreCommitHookScript();
+
+/**
+ * Install the pre-commit hook for frontmatter validation.
+ */
+function installPreCommitHookWithPolicy(
+  dir: string,
+  policy: MemoryLayoutPolicy,
+): void {
+  const hooksDir = join(dir, ".git", "hooks");
+  const hookPath = join(hooksDir, "pre-commit");
+
+  if (!existsSync(hooksDir)) {
+    mkdirSync(hooksDir, { recursive: true });
+  }
+
+  writeFileSync(hookPath, PRE_COMMIT_HOOK_SCRIPT, "utf-8");
+  chmodSync(hookPath, 0o755);
+  writeFileSync(
+    join(hooksDir, MEMORY_CONSTRAINTS_VALIDATOR_NAME),
+    MEMORY_CONSTRAINTS_VALIDATOR_SCRIPT,
+    "utf8",
+  );
+  writeFileSync(join(dir, ".git", MEMORY_LAYOUT_POLICY), `${policy}\n`, "utf8");
+  debugLog("memfs-git", "Installed pre-commit hook");
+}
+
+export function installPreCommitHook(
+  dir: string,
+  allowRootMemoryLayout = false,
+): void {
+  installPreCommitHookWithPolicy(
+    dir,
+    allowRootMemoryLayout ? "root-marker" : "legacy-only",
+  );
+}
+
+/** Refresh validation for a local-only repository without changing its layout. */
+export function installLocalMemoryPreCommitHook(dir: string): void {
+  const hasRootMarker =
+    existsSync(join(dir, "MEMORY.md")) ||
+    spawnSync("git", ["cat-file", "-e", "HEAD:MEMORY.md"], {
+      cwd: dir,
+      stdio: "ignore",
+    }).status === 0;
+  installPreCommitHookWithPolicy(
+    dir,
+    hasRootMarker ? "root-marker" : "legacy-only",
+  );
+}
+
+/** Install memory validation for an attached shared repository. */
+export function installSharedMemoryPreCommitHook(dir: string): void {
+  installPreCommitHookWithPolicy(dir, "shared-memory");
+}
+
+/**
+ * Bash post-commit hook that pushes memfs commits to an optional additional
+ * git remote (the "memory repository" endpoint).
+ *
+ * Reads the remote URL from the repo's local git config
+ * (`letta.memoryRepository.url`). No-op when the key is unset. Push runs
+ * asynchronously in the background so commits stay fast, and failures are
+ * logged to `.git/memory-repository-push.log` without blocking the user.
+ *
+ * URL is per-repo by design: each agent's memfs repo has its own `.git/config`,
+ * so the endpoint is scoped to a single agent automatically.
+ */
+export const POST_COMMIT_HOOK_SCRIPT = `#!/usr/bin/env bash
+# Letta Code: push memfs commits to the configured memory-repository remote.
+# Installed by Letta Code CLI. Do not edit by hand — regenerated on startup.
+url=$(git config --local --get letta.memoryRepository.url 2>/dev/null)
+[ -z "$url" ] && exit 0
+branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) || exit 0
+[ -z "$branch" ] && exit 0
+# Reflection and other harness worktrees commit on temporary branches; only the
+# main MemFS checkout should push to the optional memory repository remote.
+[ "$branch" != "main" ] && exit 0
+log="$(git rev-parse --git-dir)/memory-repository-push.log"
+(
+  {
+    printf '\\n--- %s %s on %s ---\\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$(git rev-parse --short HEAD)" "$branch"
+    git push --quiet "$url" "$branch":"$branch" 2>&1
+    echo "exit=$?"
+  } >> "$log" 2>&1
+) &
+disown 2>/dev/null || true
+exit 0
+`;
+
+/**
+ * Install the post-commit hook that pushes to `letta.memoryRepository.url`.
+ * Hook is harmless when the config key is unset (no-ops on every commit).
+ */
+export function installPostCommitHook(dir: string): void {
+  const hooksDir = join(dir, ".git", "hooks");
+  const hookPath = join(hooksDir, "post-commit");
+
+  if (!existsSync(hooksDir)) {
+    mkdirSync(hooksDir, { recursive: true });
+  }
+
+  writeFileSync(hookPath, POST_COMMIT_HOOK_SCRIPT, "utf-8");
+  chmodSync(hookPath, 0o755);
+  debugLog("memfs-git", "Installed post-commit memory-repository hook");
+}
+
+/** Refresh every harness-owned Git hook for an API-backed memory checkout. */
+export function installMemoryGitHooks(dir: string): void {
+  installPreCommitHook(dir, true);
+  installPostCommitHook(dir);
+}
