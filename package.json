@@ -196,7 +196,7 @@
   },
   "scripts": {
     "prepare": "node .husky/install.mjs",
-    "lint": "bunx --bun @biomejs/biome@2.2.5 check src",
+    "lint": "bunx --bun @biomejs/biome@2.2.5 check --max-diagnostics=100 src",
     "fix": "bunx --bun @biomejs/biome@2.2.5 check --write src",
     "typecheck": "tsc --noEmit",
     "check:cycles": "madge --circular --extensions ts,tsx src/",
