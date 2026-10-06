@@ -152,9 +152,7 @@ function runtimeExecutionDeniedResult(
   };
 }
 
-function runtimeExecutionReceiptFailure(
-  message: string,
-): ToolExecutionResult {
+function runtimeExecutionReceiptFailure(message: string): ToolExecutionResult {
   return {
     toolReturn: `Error: Tool executed, but its execution receipt could not be recorded. ${message}`,
     status: "error",

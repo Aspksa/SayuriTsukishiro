@@ -66,7 +66,10 @@ export function decideSayuriAction(
     }
     return policy.autoAllowReadOnly
       ? { decision: "allow", reason: "Read-only action inside approved scope." }
-      : { decision: "ask", reason: "Policy requires approval for read access." };
+      : {
+          decision: "ask",
+          reason: "Policy requires approval for read access.",
+        };
   }
 
   if (

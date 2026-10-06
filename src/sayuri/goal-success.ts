@@ -1,15 +1,11 @@
 import { randomUUID } from "node:crypto";
-import {
-  appendFile,
-  mkdir,
-  readFile,
-} from "node:fs/promises";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { withFileLock } from "@/utils/file-lock";
 import {
-  transitionSayuriGoal,
   type SayuriGoalStore,
   type SayuriProjectGoal,
+  transitionSayuriGoal,
 } from "./goal-manager";
 import { resolveSayuriStateRoot } from "./state-store";
 import type { SayuriTaskRegistry } from "./task-registry";
@@ -187,7 +183,9 @@ export async function evaluateSayuriGoalSuccess(input: {
   for (const taskId of input.goal.taskIds) {
     const task = await input.taskRegistry.getTask(input.goal.projectId, taskId);
     if (!task) {
-      reasons.push(`Linked task "${taskId}" is missing from the project registry.`);
+      reasons.push(
+        `Linked task "${taskId}" is missing from the project registry.`,
+      );
       continue;
     }
     if (task.status === "completed") {

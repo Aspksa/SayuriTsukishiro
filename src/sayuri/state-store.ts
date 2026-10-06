@@ -57,10 +57,7 @@ function parseIsoTimestamp(value: unknown, label: string): string {
   return value;
 }
 
-function parseSnapshot(
-  taskId: string,
-  raw: string,
-): SayuriBrainStateSnapshot {
+function parseSnapshot(taskId: string, raw: string): SayuriBrainStateSnapshot {
   let value: unknown;
   try {
     value = JSON.parse(raw) as unknown;
@@ -170,10 +167,7 @@ export class FileSayuriBrainStateStore implements SayuriBrainStateStore {
     await mkdir(this.taskDir(taskId), { recursive: true });
   }
 
-  async saveSnapshot(
-    task: SayuriTaskState,
-    plan: SayuriPlan,
-  ): Promise<void> {
+  async saveSnapshot(task: SayuriTaskState, plan: SayuriPlan): Promise<void> {
     validateSayuriTaskState(task);
     const planValidation = validateSayuriPlan(plan);
     if (!planValidation.valid) {
@@ -208,9 +202,7 @@ export class FileSayuriBrainStateStore implements SayuriBrainStateStore {
     );
   }
 
-  async loadSnapshot(
-    taskId: string,
-  ): Promise<SayuriBrainStateSnapshot | null> {
+  async loadSnapshot(taskId: string): Promise<SayuriBrainStateSnapshot | null> {
     try {
       const raw = await readFile(this.snapshotPath(taskId), "utf8");
       return parseSnapshot(taskId, raw);

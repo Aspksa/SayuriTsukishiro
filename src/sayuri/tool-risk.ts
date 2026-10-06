@@ -26,11 +26,7 @@ const PROJECT_MUTATION_TOOLS = new Set([
   "write_artifact_file",
 ]);
 
-const SYSTEM_MUTATION_TOOLS = new Set([
-  "Bash",
-  "exec_command",
-  "write_stdin",
-]);
+const SYSTEM_MUTATION_TOOLS = new Set(["Bash", "exec_command", "write_stdin"]);
 
 const DESTRUCTIVE_TOOLS = new Set(["TaskStop"]);
 

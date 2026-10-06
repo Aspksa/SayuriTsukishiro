@@ -1,10 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  mkdir,
-  readFile,
-  rename,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { withFileLock } from "@/utils/file-lock";
 import { resolveSayuriStateRoot } from "./state-store";
@@ -72,7 +67,11 @@ export interface SayuriPlannerSeed {
 
 export type SayuriProjectWorkDecision =
   | { kind: "resume-unfinished-task"; task: SayuriProjectTaskEntry }
-  | { kind: "create-task"; goal: SayuriProjectGoal; plannerSeed: SayuriPlannerSeed }
+  | {
+      kind: "create-task";
+      goal: SayuriProjectGoal;
+      plannerSeed: SayuriPlannerSeed;
+    }
   | { kind: "idle"; reason: string };
 
 const GOAL_STATUSES = new Set<SayuriGoalStatus>([
@@ -228,7 +227,9 @@ export class FileSayuriGoalStore implements SayuriGoalStore {
     try {
       value = JSON.parse(raw) as unknown;
     } catch {
-      throw new Error(`Goal store for project "${projectId}" is not valid JSON.`);
+      throw new Error(
+        `Goal store for project "${projectId}" is not valid JSON.`,
+      );
     }
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       throw new Error(`Goal store for project "${projectId}" is invalid.`);
@@ -267,11 +268,15 @@ export class FileSayuriGoalStore implements SayuriGoalStore {
         const temporary = `${target}.${process.pid}.${randomUUID()}.tmp`;
         await writeFile(
           temporary,
-          `${JSON.stringify({
-            schemaVersion: 1,
-            projectId: goal.projectId,
-            goals: sortGoals(goals),
-          }, null, 2)}\n`,
+          `${JSON.stringify(
+            {
+              schemaVersion: 1,
+              projectId: goal.projectId,
+              goals: sortGoals(goals),
+            },
+            null,
+            2,
+          )}\n`,
           "utf8",
         );
         await rename(temporary, target);

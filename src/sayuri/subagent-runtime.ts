@@ -1,9 +1,7 @@
-import {
-  spawnRestrictedSubagent,
-} from "@/agent/subagents/manager";
 import type { SubagentResult } from "@/agent/subagents";
-import { SAYURI_RUNTIME_MODEL_HANDLE } from "./model-gateway";
+import { spawnRestrictedSubagent } from "@/agent/subagents/manager";
 import type { SayuriEvidenceReceipt } from "./evidence-ledger";
+import { SAYURI_RUNTIME_MODEL_HANDLE } from "./model-gateway";
 import type { SayuriPlan } from "./planner";
 import {
   assertSayuriSubagentLeaseBinding,

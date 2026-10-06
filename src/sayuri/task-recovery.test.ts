@@ -3,28 +3,23 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
+import { FileSayuriBrainStateStore } from "./state-store";
+import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 import {
   recoverLatestSayuriSessionForProject,
   releaseWaitingSayuriTask,
 } from "./task-recovery";
-import { FileSayuriBrainStateStore } from "./state-store";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
 } from "./task-registry";
-import {
-  createSayuriTask,
-  transitionSayuriTask,
-} from "./task-lifecycle";
 
 describe("Sayuri unfinished task recovery", () => {
   const roots: string[] = [];
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -72,7 +67,11 @@ describe("Sayuri unfinished task recovery", () => {
       now: "2026-10-06T09:40:00.000Z",
     });
     task = transitionSayuriTask(task, "planning", "2026-10-06T09:40:01.000Z");
-    task = transitionSayuriTask(task, "waiting-user", "2026-10-06T09:40:02.000Z");
+    task = transitionSayuriTask(
+      task,
+      "waiting-user",
+      "2026-10-06T09:40:02.000Z",
+    );
     await store.saveSnapshot(task, {
       id: "waiting-plan",
       taskId: task.id,
@@ -165,7 +164,8 @@ describe("Sayuri unfinished task recovery", () => {
     });
 
     expect(result.kind).toBe("session");
-    if (result.kind !== "session") throw new Error("Expected recovered session");
+    if (result.kind !== "session")
+      throw new Error("Expected recovered session");
     expect(result.session.controller.task.status).toBe("running");
     expect(result.session.resumed).toBe(true);
     expect(

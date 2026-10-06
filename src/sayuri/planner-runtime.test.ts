@@ -46,9 +46,7 @@ describe("Sayuri Planner runtime", () => {
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 

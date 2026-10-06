@@ -1,16 +1,16 @@
 import type { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import {
+  FileSayuriGoalStore,
+  type SayuriGoalStore,
+  type SayuriProjectGoal,
+  transitionSayuriGoal,
+} from "./goal-manager";
+import {
   completeSayuriGoalIfVerified,
   evaluateSayuriGoalSuccess,
   FileSayuriGoalEvidenceStore,
   type SayuriGoalEvidenceStore,
 } from "./goal-success";
-import {
-  FileSayuriGoalStore,
-  transitionSayuriGoal,
-  type SayuriGoalStore,
-  type SayuriProjectGoal,
-} from "./goal-manager";
 import type { ConfigureSayuriModelRuntimeInput } from "./model-runtime";
 import type { SayuriPrimarySession } from "./session";
 import {
@@ -59,7 +59,9 @@ async function linkedGoalForTask(input: {
 function onlyCriterionReasons(reasons: readonly string[]): boolean {
   return (
     reasons.length > 0 &&
-    reasons.every((reason) => reason.startsWith("Success criterion is not confirmed:"))
+    reasons.every((reason) =>
+      reason.startsWith("Success criterion is not confirmed:"),
+    )
   );
 }
 

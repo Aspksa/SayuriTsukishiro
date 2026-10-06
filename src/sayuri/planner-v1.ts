@@ -103,7 +103,9 @@ export function parseSayuriPlannerV1Proposal(
   const taskId = requiredString(value.taskId, "Planner proposal taskId");
   const goalId = requiredString(value.goalId, "Planner proposal goalId");
   if (taskId !== seed.taskId || goalId !== seed.goalId) {
-    throw new Error("Planner proposal identity does not match the planner seed.");
+    throw new Error(
+      "Planner proposal identity does not match the planner seed.",
+    );
   }
   if (
     !Array.isArray(value.steps) ||

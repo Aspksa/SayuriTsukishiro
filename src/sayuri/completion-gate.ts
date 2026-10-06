@@ -1,7 +1,7 @@
 import type {
+  SayuriEvidenceLedger,
   SayuriEvidenceReceipt,
 } from "./evidence-ledger";
-import { SayuriEvidenceLedger } from "./evidence-ledger";
 import type { SayuriPlan } from "./planner";
 import { validateSayuriPlan } from "./planner";
 
@@ -28,9 +28,7 @@ export function evaluateSayuriCompletionGate(
 
   for (const step of plan.steps) {
     if (step.status !== "completed" && step.status !== "cancelled") {
-      reasons.push(
-        `Plan step "${step.id}" is not terminal: ${step.status}.`,
-      );
+      reasons.push(`Plan step "${step.id}" is not terminal: ${step.status}.`);
       continue;
     }
     if (step.status === "cancelled" || !step.requiresEvidence) continue;
@@ -51,9 +49,7 @@ export function evaluateSayuriCompletionGate(
       }
       evidence.push(receipt);
       if (receipt.taskId !== plan.taskId) {
-        reasons.push(
-          `Receipt "${receipt.id}" belongs to another task.`,
-        );
+        reasons.push(`Receipt "${receipt.id}" belongs to another task.`);
       }
       if (receipt.stepId !== step.id) {
         reasons.push(
@@ -70,9 +66,7 @@ export function evaluateSayuriCompletionGate(
       }
     }
     if (!hasDirectSuccess) {
-      reasons.push(
-        `Plan step "${step.id}" lacks direct successful evidence.`,
-      );
+      reasons.push(`Plan step "${step.id}" lacks direct successful evidence.`);
     }
   }
 

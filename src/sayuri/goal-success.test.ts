@@ -2,12 +2,12 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { FileSayuriGoalStore } from "./goal-manager";
 import {
   completeSayuriGoalIfVerified,
   evaluateSayuriGoalSuccess,
   FileSayuriGoalEvidenceStore,
 } from "./goal-success";
-import { FileSayuriGoalStore } from "./goal-manager";
 import { FileSayuriTaskRegistry } from "./task-registry";
 
 describe("Sayuri Goal Success Verification", () => {
@@ -15,9 +15,7 @@ describe("Sayuri Goal Success Verification", () => {
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 

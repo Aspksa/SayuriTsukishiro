@@ -1,8 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 const { runSayuriLeasedSubagent } = await import("./subagent-runtime");
-const { createSayuriSubagentCapabilityLease } = await import("./subagent-lease");
-const { createSayuriTask, transitionSayuriTask } = await import("./task-lifecycle");
+const { createSayuriSubagentCapabilityLease } = await import(
+  "./subagent-lease"
+);
+const { createSayuriTask, transitionSayuriTask } = await import(
+  "./task-lifecycle"
+);
 
 describe("Sayuri leased subagent runtime", () => {
   test("forces exact Sayuri model and returns parent-bound evidence", async () => {

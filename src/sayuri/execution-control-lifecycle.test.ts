@@ -32,10 +32,7 @@ describe("Sayuri controller lifecycle gate", () => {
       },
     });
 
-    await controller.transitionTask(
-      "waiting-user",
-      "2026-10-06T09:42:04.000Z",
-    );
+    await controller.transitionTask("waiting-user", "2026-10-06T09:42:04.000Z");
     const denied = await controller.runtimeControl.authorize({
       toolName: "Read",
       toolKind: "builtin",
@@ -46,10 +43,7 @@ describe("Sayuri controller lifecycle gate", () => {
     expect(denied.decision).toBe("deny");
     expect(denied.reason).toContain("waiting-user");
 
-    await controller.transitionTask(
-      "running",
-      "2026-10-06T09:42:05.000Z",
-    );
+    await controller.transitionTask("running", "2026-10-06T09:42:05.000Z");
     const allowed = await controller.runtimeControl.authorize({
       toolName: "Read",
       toolKind: "builtin",

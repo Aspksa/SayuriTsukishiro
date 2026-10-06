@@ -57,7 +57,9 @@ describe("Sayuri plan step intent and retry policy", () => {
       status: "success",
       durationMs: 1,
     });
-    expect(controller.verifyToolCall("unrelated-read").verdict).toBe("verified");
+    expect(controller.verifyToolCall("unrelated-read").verdict).toBe(
+      "verified",
+    );
     await expect(
       controller.checkpointToolCall({
         toolCallId: "unrelated-read",

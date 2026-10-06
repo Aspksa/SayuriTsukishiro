@@ -2,15 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { FileSayuriBrainStateStore } from "./state-store";
+import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
 } from "./task-registry";
-import { FileSayuriBrainStateStore } from "./state-store";
-import {
-  createSayuriTask,
-  transitionSayuriTask,
-} from "./task-lifecycle";
 
 describe("Sayuri project task registry", () => {
   test("indexes durable task state by project and finds unfinished work", async () => {
@@ -31,21 +28,9 @@ describe("Sayuri project task registry", () => {
         goal: "Continue project work",
         now: "2026-10-06T09:30:00.000Z",
       });
-      task = transitionSayuriTask(
-        task,
-        "planning",
-        "2026-10-06T09:30:01.000Z",
-      );
-      task = transitionSayuriTask(
-        task,
-        "ready",
-        "2026-10-06T09:30:02.000Z",
-      );
-      task = transitionSayuriTask(
-        task,
-        "running",
-        "2026-10-06T09:30:03.000Z",
-      );
+      task = transitionSayuriTask(task, "planning", "2026-10-06T09:30:01.000Z");
+      task = transitionSayuriTask(task, "ready", "2026-10-06T09:30:02.000Z");
+      task = transitionSayuriTask(task, "running", "2026-10-06T09:30:03.000Z");
       const plan = {
         id: "plan-a",
         taskId: "task-a",

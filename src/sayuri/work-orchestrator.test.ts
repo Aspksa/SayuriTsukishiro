@@ -4,16 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import { FileSayuriGoalStore } from "./goal-manager";
-import { orchestrateSayuriProjectWork } from "./work-orchestrator";
 import { FileSayuriBrainStateStore } from "./state-store";
+import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
 } from "./task-registry";
-import {
-  createSayuriTask,
-  transitionSayuriTask,
-} from "./task-lifecycle";
+import { orchestrateSayuriProjectWork } from "./work-orchestrator";
 
 function sse(content: string): Response {
   const chunk = (payload: unknown) => `data: ${JSON.stringify(payload)}\n\n`;
@@ -51,9 +48,7 @@ describe("Sayuri Project Work Orchestrator", () => {
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -143,9 +138,9 @@ describe("Sayuri Project Work Orchestrator", () => {
     expect(
       (await env.goalStore.getGoal("project-a", "goal-next"))?.taskIds,
     ).toEqual([taskId]);
-    expect(
-      (await env.taskRegistry.getTask("project-a", taskId))?.status,
-    ).toBe("running");
+    expect((await env.taskRegistry.getTask("project-a", taskId))?.status).toBe(
+      "running",
+    );
     expect(env.requests).toContain("/v1/chat/completions");
   });
 

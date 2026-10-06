@@ -1,21 +1,15 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  executeApprovalBatch,
   type ApprovalDecision,
+  executeApprovalBatch,
 } from "@/agent/approval-execution";
 import {
   clearTools,
-  prepareToolExecutionContextForSpecificTools,
   loadSpecificTools,
+  prepareToolExecutionContextForSpecificTools,
   releaseToolExecutionContext,
 } from "@/tools/manager";
 import { createSayuriExecutionController } from "./execution-control";
@@ -96,9 +90,9 @@ describe("Sayuri approval bridge", () => {
         workingDirectory: workDir,
       });
       expect(result?.type).toBe("tool");
-      expect(
-        result && "status" in result ? result.status : undefined,
-      ).toBe("success");
+      expect(result && "status" in result ? result.status : undefined).toBe(
+        "success",
+      );
       expect(await readFile(target, "utf8")).toBe("approved");
       expect(controller.verifyToolCall("approved-write").verdict).toBe(
         "verified",
@@ -108,13 +102,11 @@ describe("Sayuri approval bridge", () => {
         toolContextId: prepared.contextId,
         workingDirectory: workDir,
       });
+      expect(replay && "status" in replay ? replay.status : undefined).toBe(
+        "error",
+      );
       expect(
-        replay && "status" in replay ? replay.status : undefined,
-      ).toBe("error");
-      expect(
-        replay && "tool_return" in replay
-          ? String(replay.tool_return)
-          : "",
+        replay && "tool_return" in replay ? String(replay.tool_return) : "",
       ).toContain("already been consumed");
     } finally {
       releaseToolExecutionContext(prepared.contextId);
@@ -171,13 +163,11 @@ describe("Sayuri approval bridge", () => {
           workingDirectory: workDir,
         },
       );
+      expect(result && "status" in result ? result.status : undefined).toBe(
+        "error",
+      );
       expect(
-        result && "status" in result ? result.status : undefined,
-      ).toBe("error");
-      expect(
-        result && "tool_return" in result
-          ? String(result.tool_return)
-          : "",
+        result && "tool_return" in result ? String(result.tool_return) : "",
       ).toContain("requires an active Sayuri workspace sandbox");
     } finally {
       releaseToolExecutionContext(prepared.contextId);

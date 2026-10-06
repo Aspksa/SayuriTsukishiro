@@ -3,35 +3,28 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SayuriEvidenceLedger } from "./evidence-ledger";
-import {
-  createSayuriExecutionController,
-} from "./execution-control";
+import { createSayuriExecutionController } from "./execution-control";
+import { FileSayuriGoalStore, linkTaskToSayuriGoal } from "./goal-manager";
 import { FileSayuriGoalEvidenceStore } from "./goal-success";
-import {
-  FileSayuriGoalStore,
-  linkTaskToSayuriGoal,
-} from "./goal-manager";
 import type { SayuriPrimarySession } from "./session";
 import { FileSayuriBrainStateStore } from "./state-store";
-import {
-  FileSayuriTaskRegistry,
-  ProjectIndexedSayuriBrainStateStore,
-} from "./task-registry";
+import { finalizeSayuriSessionTask } from "./task-finalizer";
 import {
   checkpointSayuriTask,
   createSayuriTask,
   transitionSayuriTask,
 } from "./task-lifecycle";
-import { finalizeSayuriSessionTask } from "./task-finalizer";
+import {
+  FileSayuriTaskRegistry,
+  ProjectIndexedSayuriBrainStateStore,
+} from "./task-registry";
 
 describe("Sayuri Task Finalizer", () => {
   const roots: string[] = [];
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -113,11 +106,7 @@ describe("Sayuri Task Finalizer", () => {
       successCriteria,
       createdAt: "2026-10-06T11:09:00.000Z",
     });
-    goal = linkTaskToSayuriGoal(
-      goal,
-      task.id,
-      "2026-10-06T11:10:04.000Z",
-    );
+    goal = linkTaskToSayuriGoal(goal, task.id, "2026-10-06T11:10:04.000Z");
     await goalStore.saveGoal(goal);
 
     const session = {

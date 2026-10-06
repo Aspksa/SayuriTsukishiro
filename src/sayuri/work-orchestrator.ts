@@ -15,17 +15,17 @@ import {
   FileSayuriBrainStateStore,
   type SayuriBrainStateStore,
 } from "./state-store";
+import { transitionSayuriTask } from "./task-lifecycle";
+import {
+  recoverLatestSayuriSessionForProject,
+  type SayuriProjectRecoveryResult,
+} from "./task-recovery";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
   type SayuriProjectTaskEntry,
   type SayuriTaskRegistry,
 } from "./task-registry";
-import {
-  recoverLatestSayuriSessionForProject,
-  type SayuriProjectRecoveryResult,
-} from "./task-recovery";
-import { transitionSayuriTask } from "./task-lifecycle";
 
 export type SayuriProjectWorkOrchestrationResult =
   | {
@@ -126,18 +126,10 @@ export async function orchestrateSayuriProjectWork(
     ...(input.now ? { now: input.now } : {}),
   });
 
-  const linkedGoal = linkTaskToSayuriGoal(
-    decision.goal,
-    planned.task.id,
-    now,
-  );
+  const linkedGoal = linkTaskToSayuriGoal(decision.goal, planned.task.id, now);
   await goalStore.saveGoal(linkedGoal);
 
-  const runningTask = transitionSayuriTask(
-    planned.task,
-    "running",
-    now,
-  );
+  const runningTask = transitionSayuriTask(planned.task, "running", now);
   await indexedStore.saveSnapshot(runningTask, planned.plan);
 
   const session = await bootstrapSayuriPrimarySession({

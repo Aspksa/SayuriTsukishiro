@@ -2,24 +2,24 @@ import { resolvePiModelForAgent } from "@/backend/dev/pi-model-factory";
 import { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import type { SayuriPlannerSeed } from "./goal-manager";
 import {
-  configureSayuriModelRuntime,
-  type ConfigureSayuriModelRuntimeInput,
-} from "./model-runtime";
-import {
   SAYURI_RUNTIME_MODEL_HANDLE,
   SAYURI_RUNTIME_PROVIDER_TYPE,
 } from "./model-gateway";
+import {
+  type ConfigureSayuriModelRuntimeInput,
+  configureSayuriModelRuntime,
+} from "./model-runtime";
+import type { SayuriPlan } from "./planner";
 import {
   buildSayuriPlannerV1Prompt,
   compileSayuriPlannerV1Plan,
   parseSayuriPlannerV1Proposal,
 } from "./planner-v1";
-import type { SayuriPlan } from "./planner";
 import type { SayuriBrainStateStore } from "./state-store";
 import {
   createSayuriTask,
-  transitionSayuriTask,
   type SayuriTaskState,
+  transitionSayuriTask,
 } from "./task-lifecycle";
 
 export interface SayuriPlannerRuntimeResult {
@@ -30,8 +30,7 @@ export interface SayuriPlannerRuntimeResult {
 
 function assistantText(message: {
   content: ReadonlyArray<
-    | { type: "text"; text: string }
-    | { type: string; [key: string]: unknown }
+    { type: "text"; text: string } | { type: string; [key: string]: unknown }
   >;
 }): string {
   return message.content

@@ -13,21 +13,17 @@ import {
 } from "./background-supervisor";
 import { createSayuriExecutionController } from "./execution-control";
 import type { SayuriPrimarySession } from "./session";
-import { createSayuriSubagentCapabilityLease } from "./subagent-lease";
-import {
-  FileSayuriTaskRegistry,
-} from "./task-registry";
 import { FileSayuriBrainStateStore } from "./state-store";
+import { createSayuriSubagentCapabilityLease } from "./subagent-lease";
 import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
+import { FileSayuriTaskRegistry } from "./task-registry";
 
 describe("Sayuri background work supervisor", () => {
   const roots: string[] = [];
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -151,10 +147,12 @@ describe("Sayuri background work supervisor", () => {
     expect(decision.kind).toBe("handoff-complete");
     expect(fixture.session.controller.task.status).toBe("checkpointed");
     expect(fixture.session.controller.plan.steps[0]?.status).toBe("completed");
-    expect(fixture.session.controller.plan.steps[1]?.status).toBe("in-progress");
-    expect(
-      (await fixture.store.get("project-a", lease.id))?.status,
-    ).toBe("handed-off");
+    expect(fixture.session.controller.plan.steps[1]?.status).toBe(
+      "in-progress",
+    );
+    expect((await fixture.store.get("project-a", lease.id))?.status).toBe(
+      "handed-off",
+    );
   });
 
   test("never auto-resumes orphaned mutation work", async () => {
@@ -199,9 +197,9 @@ describe("Sayuri background work supervisor", () => {
       throw new Error("Expected background-blocked");
     }
     expect(decision.reason).toContain("mutation lease");
-    expect(
-      (await fixture.store.get("project-a", lease.id))?.status,
-    ).toBe("orphaned");
+    expect((await fixture.store.get("project-a", lease.id))?.status).toBe(
+      "orphaned",
+    );
   });
 
   test("only classifies durable read-only assignments as auto-resumable", async () => {
@@ -235,10 +233,7 @@ describe("Sayuri background work supervisor", () => {
     });
 
     expect(
-      canAutoResumeSayuriBackgroundLease(
-        record,
-        "2026-10-06T12:31:01.000Z",
-      ),
+      canAutoResumeSayuriBackgroundLease(record, "2026-10-06T12:31:01.000Z"),
     ).toBe(true);
     expect(
       canAutoResumeSayuriBackgroundLease(

@@ -1,24 +1,19 @@
 import type { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import {
+  FileSayuriBackgroundLeaseStore,
+  type SayuriBackgroundLeaseStore,
+} from "./background-lease";
+import { superviseSayuriBackgroundForSession } from "./background-supervisor";
+import {
   admitNextSayuriCronIntent,
   FileSayuriCronIntentStore,
   type SayuriCronIntentStore,
 } from "./cron-intent";
-import {
-  FileSayuriBackgroundLeaseStore,
-  type SayuriBackgroundLeaseStore,
-} from "./background-lease";
-import {
-  superviseSayuriBackgroundForSession,
-} from "./background-supervisor";
+import { FileSayuriGoalStore, type SayuriGoalStore } from "./goal-manager";
 import {
   FileSayuriGoalEvidenceStore,
   type SayuriGoalEvidenceStore,
 } from "./goal-success";
-import {
-  FileSayuriGoalStore,
-  type SayuriGoalStore,
-} from "./goal-manager";
 import type { ConfigureSayuriModelRuntimeInput } from "./model-runtime";
 import type { SayuriPlanStep } from "./planner";
 import type { SayuriPrimarySession } from "./session";
@@ -30,12 +25,12 @@ import {
   finalizeSayuriSessionTask,
   type SayuriTaskFinalizationResult,
 } from "./task-finalizer";
+import { isUnfinishedSayuriTaskStatus } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   type SayuriProjectTaskEntry,
   type SayuriTaskRegistry,
 } from "./task-registry";
-import { isUnfinishedSayuriTaskStatus } from "./task-lifecycle";
 import {
   orchestrateSayuriProjectWork,
   type SayuriProjectWorkOrchestrationResult,
@@ -80,8 +75,9 @@ export type SayuriCognitiveLoopDecision =
 
 function activePlanStep(session: SayuriPrimarySession): SayuriPlanStep | null {
   return (
-    session.controller.plan.steps.find((step) => step.status === "in-progress") ??
-    null
+    session.controller.plan.steps.find(
+      (step) => step.status === "in-progress",
+    ) ?? null
   );
 }
 
@@ -219,7 +215,8 @@ export async function superviseSayuriProject(input: {
     input.goalEvidenceStore ?? new FileSayuriGoalEvidenceStore();
   const backgroundLeaseStore =
     input.backgroundLeaseStore ?? new FileSayuriBackgroundLeaseStore();
-  const cronIntentStore = input.cronIntentStore ?? new FileSayuriCronIntentStore();
+  const cronIntentStore =
+    input.cronIntentStore ?? new FileSayuriCronIntentStore();
 
   await admitNextSayuriCronIntent({
     projectId: input.projectId,
@@ -229,9 +226,9 @@ export async function superviseSayuriProject(input: {
     ...(input.now ? { now: input.now } : {}),
   });
 
-  const unfinished = (await taskRegistry.listProjectTasks(input.projectId)).filter(
-    (task) => isUnfinishedSayuriTaskStatus(task.status),
-  );
+  const unfinished = (
+    await taskRegistry.listProjectTasks(input.projectId)
+  ).filter((task) => isUnfinishedSayuriTaskStatus(task.status));
   if (unfinished.length > 1) {
     return {
       kind: "conflict",

@@ -1,16 +1,14 @@
 import {
-  runSayuriLeasedSubagent,
-} from "./subagent-runtime";
-import type { SayuriExecutionController } from "./execution-control";
-import type { SayuriPlan } from "./planner";
-import {
   createSayuriBackgroundLeaseRecord,
   recoverSayuriBackgroundLeases,
-  transitionSayuriBackgroundLease,
   type SayuriBackgroundLeaseRecord,
   type SayuriBackgroundLeaseStore,
+  transitionSayuriBackgroundLease,
 } from "./background-lease";
+import type { SayuriExecutionController } from "./execution-control";
+import type { SayuriPlan } from "./planner";
 import type { SayuriSubagentCapabilityLease } from "./subagent-lease";
+import { runSayuriLeasedSubagent } from "./subagent-runtime";
 import type { SayuriTaskState } from "./task-lifecycle";
 
 const liveControllers = new Map<string, AbortController>();
@@ -62,8 +60,8 @@ export async function startSayuriBackgroundSubagent(input: {
     parentConversationId: input.ownerConversationId,
     signal: abort.signal,
     ...(input.maxTurns ? { maxTurns: input.maxTurns } : {}),
-  }).then(
-    async ({ result, receipt }) => {
+  })
+    .then(async ({ result, receipt }) => {
       const current =
         (await input.store.get(input.projectId, input.lease.id)) ?? record;
       if (current.status === "cancelled" || current.status === "expired") {
@@ -78,10 +76,10 @@ export async function startSayuriBackgroundSubagent(input: {
           });
       await input.store.save(next);
       return next;
-    },
-  ).finally(() => {
-    liveControllers.delete(input.lease.id);
-  });
+    })
+    .finally(() => {
+      liveControllers.delete(input.lease.id);
+    });
 
   return { record, completion };
 }
@@ -97,14 +95,17 @@ export async function resumeSayuriOrphanedBackgroundSubagent(input: {
 }): Promise<SayuriBackgroundRunHandle> {
   const now = input.now ?? new Date().toISOString();
   const record = await input.store.get(input.projectId, input.leaseId);
-  if (!record) throw new Error(`Background lease "${input.leaseId}" was not found.`);
+  if (!record)
+    throw new Error(`Background lease "${input.leaseId}" was not found.`);
   if (record.status !== "orphaned") {
     throw new Error(
       `Background lease "${record.id}" is not orphaned: ${record.status}.`,
     );
   }
   if (record.lease.mode !== "read-only") {
-    throw new Error("Only read-only orphaned background leases may auto-resume.");
+    throw new Error(
+      "Only read-only orphaned background leases may auto-resume.",
+    );
   }
   if (!record.assignment?.trim()) {
     throw new Error("Orphaned background lease has no durable assignment.");
@@ -115,7 +116,7 @@ export async function resumeSayuriOrphanedBackgroundSubagent(input: {
     return { record: expired, completion: Promise.resolve(expired) };
   }
 
-  let running = transitionSayuriBackgroundLease(record, "running", { now });
+  const running = transitionSayuriBackgroundLease(record, "running", { now });
   await input.store.save(running);
   const abort = new AbortController();
   liveControllers.set(record.id, abort);
@@ -128,8 +129,8 @@ export async function resumeSayuriOrphanedBackgroundSubagent(input: {
     parentConversationId: record.ownerConversationId,
     signal: abort.signal,
     ...(input.maxTurns ? { maxTurns: input.maxTurns } : {}),
-  }).then(
-    async ({ result, receipt }) => {
+  })
+    .then(async ({ result, receipt }) => {
       const current =
         (await input.store.get(input.projectId, record.id)) ?? running;
       if (current.status === "cancelled" || current.status === "expired") {
@@ -144,10 +145,10 @@ export async function resumeSayuriOrphanedBackgroundSubagent(input: {
           });
       await input.store.save(next);
       return next;
-    },
-  ).finally(() => {
-    liveControllers.delete(record.id);
-  });
+    })
+    .finally(() => {
+      liveControllers.delete(record.id);
+    });
 
   return { record: running, completion };
 }
@@ -159,7 +160,8 @@ export async function cancelSayuriBackgroundSubagent(input: {
   now?: string;
 }): Promise<SayuriBackgroundLeaseRecord> {
   const record = await input.store.get(input.projectId, input.leaseId);
-  if (!record) throw new Error(`Background lease "${input.leaseId}" was not found.`);
+  if (!record)
+    throw new Error(`Background lease "${input.leaseId}" was not found.`);
   if (!["leased", "running", "orphaned"].includes(record.status)) {
     throw new Error(
       `Background lease cannot be cancelled from "${record.status}".`,
@@ -183,7 +185,8 @@ export async function handoffSayuriBackgroundResult(input: {
   now?: string;
 }): Promise<SayuriBackgroundLeaseRecord> {
   const record = await input.store.get(input.projectId, input.leaseId);
-  if (!record) throw new Error(`Background lease "${input.leaseId}" was not found.`);
+  if (!record)
+    throw new Error(`Background lease "${input.leaseId}" was not found.`);
   if (record.status === "handed-off") return record;
   if (record.status !== "completed" || !record.resultReceipt) {
     throw new Error(

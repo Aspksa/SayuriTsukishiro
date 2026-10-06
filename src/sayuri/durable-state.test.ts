@@ -1,18 +1,8 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  clearTools,
-  executeTool,
-  loadSpecificTools,
-} from "@/tools/manager";
+import { clearTools, executeTool, loadSpecificTools } from "@/tools/manager";
 import {
   createDurableSayuriExecutionController,
   resumeSayuriExecutionController,
@@ -30,21 +20,9 @@ function runningTask() {
     goal: "Persist verified Sayuri execution state",
     now: "2026-10-06T08:30:00.000Z",
   });
-  task = transitionSayuriTask(
-    task,
-    "planning",
-    "2026-10-06T08:30:01.000Z",
-  );
-  task = transitionSayuriTask(
-    task,
-    "ready",
-    "2026-10-06T08:30:02.000Z",
-  );
-  return transitionSayuriTask(
-    task,
-    "running",
-    "2026-10-06T08:30:03.000Z",
-  );
+  task = transitionSayuriTask(task, "planning", "2026-10-06T08:30:01.000Z");
+  task = transitionSayuriTask(task, "ready", "2026-10-06T08:30:02.000Z");
+  return transitionSayuriTask(task, "running", "2026-10-06T08:30:03.000Z");
 }
 
 beforeEach(async () => {

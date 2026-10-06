@@ -122,7 +122,9 @@ describe("Sayuri Cognitive Core foundation", () => {
     });
 
     expect(validation.valid).toBe(false);
-    expect(validation.errors.join("\n")).toContain("must require execution evidence");
+    expect(validation.errors.join("\n")).toContain(
+      "must require execution evidence",
+    );
   });
 
   test("verifies execution only from successful receipts with sufficient trust", () => {

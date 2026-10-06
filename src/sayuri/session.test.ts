@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { Stream } from "@letta-ai/letta-client/core/streaming";
-import type { LettaStreamingResponse } from "@letta-ai/letta-client/resources/agents/messages";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Stream } from "@letta-ai/letta-client/core/streaming";
+import type { LettaStreamingResponse } from "@letta-ai/letta-client/resources/agents/messages";
 import type { Backend } from "@/backend";
 import { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import { getRuntimeContext } from "@/runtime-context";
@@ -20,9 +20,7 @@ describe("Sayuri primary session bootstrap", () => {
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 

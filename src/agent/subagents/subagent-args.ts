@@ -134,8 +134,7 @@ export function buildSubagentArgs(
   // Build list of auto-approved tools:
   // 1. Inherit from parent (CLI + session rules)
   // 2. Add subagent's allowed tools (so they don't hang on approvals)
-  const inheritParentToolApprovals =
-    options.inheritParentToolApprovals ?? true;
+  const inheritParentToolApprovals = options.inheritParentToolApprovals ?? true;
   const parentAllowedTools = inheritParentToolApprovals
     ? cliPermissions.getAllowedTools()
     : [];

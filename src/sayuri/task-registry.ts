@@ -1,17 +1,12 @@
 import { randomUUID } from "node:crypto";
-import {
-  mkdir,
-  readFile,
-  rename,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { withFileLock } from "@/utils/file-lock";
 import type { SayuriPlan } from "./planner";
 import {
+  resolveSayuriStateRoot,
   type SayuriBrainStateSnapshot,
   type SayuriBrainStateStore,
-  resolveSayuriStateRoot,
 } from "./state-store";
 import {
   isSayuriTaskStatus,
@@ -62,7 +57,8 @@ function encodeId(value: string, label: string): string {
 }
 
 function validateEntry(entry: SayuriProjectTaskEntry): void {
-  if (!entry.projectId.trim()) throw new Error("Registry projectId is required.");
+  if (!entry.projectId.trim())
+    throw new Error("Registry projectId is required.");
   if (!entry.taskId.trim()) throw new Error("Registry taskId is required.");
   if (!entry.planId.trim()) throw new Error("Registry planId is required.");
   if (!entry.agentId.trim()) throw new Error("Registry agentId is required.");
@@ -167,7 +163,9 @@ export class FileSayuriTaskRegistry implements SayuriTaskRegistry {
       );
     }
     if (!value || typeof value !== "object" || Array.isArray(value)) {
-      throw new Error(`Sayuri task registry for project "${projectId}" is invalid.`);
+      throw new Error(
+        `Sayuri task registry for project "${projectId}" is invalid.`,
+      );
     }
     const record = value as Partial<SayuriProjectTaskRegistryFile>;
     if (record.schemaVersion !== SAYURI_TASK_REGISTRY_SCHEMA_VERSION) {
@@ -219,14 +217,10 @@ export class FileSayuriTaskRegistry implements SayuriTaskRegistry {
     taskId: string,
   ): Promise<SayuriProjectTaskEntry | null> {
     const registry = await this.readRegistry(projectId);
-    return (
-      registry.tasks.find((entry) => entry.taskId === taskId) ?? null
-    );
+    return registry.tasks.find((entry) => entry.taskId === taskId) ?? null;
   }
 
-  async listProjectTasks(
-    projectId: string,
-  ): Promise<SayuriProjectTaskEntry[]> {
+  async listProjectTasks(projectId: string): Promise<SayuriProjectTaskEntry[]> {
     const registry = await this.readRegistry(projectId);
     return sortNewestFirst(registry.tasks);
   }

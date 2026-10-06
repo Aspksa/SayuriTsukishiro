@@ -16,9 +16,7 @@ describe("Sayuri Goal Manager", () => {
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -136,16 +134,8 @@ describe("Sayuri Goal Manager", () => {
       objective: "Track its tasks",
       createdAt: "2026-10-06T10:00:00.000Z",
     });
-    goal = linkTaskToSayuriGoal(
-      goal,
-      "task-1",
-      "2026-10-06T10:00:01.000Z",
-    );
-    goal = linkTaskToSayuriGoal(
-      goal,
-      "task-1",
-      "2026-10-06T10:00:02.000Z",
-    );
+    goal = linkTaskToSayuriGoal(goal, "task-1", "2026-10-06T10:00:01.000Z");
+    goal = linkTaskToSayuriGoal(goal, "task-1", "2026-10-06T10:00:02.000Z");
     await goals.saveGoal(goal);
     expect((await goals.getGoal("project-a", "goal-link"))?.taskIds).toEqual([
       "task-1",

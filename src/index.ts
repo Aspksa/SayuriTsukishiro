@@ -79,13 +79,13 @@ import {
 import { disableModsForProcess, shouldDisableMods } from "./mods/disable";
 import { applyStartupPermissionMode } from "./permissions/startup";
 import { assertSupportedBunRuntime } from "./runtime-version";
+import { installSayuriCronAdmission } from "./sayuri/cron-intent";
 import {
   type Settings,
   settingsManager,
   shouldPersistSessionState,
 } from "./settings-manager";
 import { startStartupAutoUpdateCheck } from "./startup-auto-update";
-import { installSayuriCronAdmission } from "./sayuri/cron-intent";
 import {
   clearPersistedClientToolRules,
   loadStartupTools,

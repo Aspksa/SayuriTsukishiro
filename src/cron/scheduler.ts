@@ -54,8 +54,8 @@ import {
 } from "./prompt";
 import { safeAppendCronRunLogForTask } from "./run-log";
 import { isManagedCloudSandbox } from "./runner";
-import { SCHEDULE_ORIGIN_TAG } from "./scheduled-task-prompt";
 import { tryAdmitScheduledTask } from "./scheduled-admission";
+import { SCHEDULE_ORIGIN_TAG } from "./scheduled-task-prompt";
 
 export {
   type CronPromptTiming,

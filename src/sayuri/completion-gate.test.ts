@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { SayuriEvidenceLedger } from "./evidence-ledger";
 import { evaluateSayuriCompletionGate } from "./completion-gate";
+import { SayuriEvidenceLedger } from "./evidence-ledger";
 
 describe("Sayuri Completion Gate", () => {
   test("accepts a terminal plan only with direct successful evidence for evidence steps", () => {

@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { createSayuriExecutionController } from "./execution-control";
+import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 import {
   buildSayuriTurnRuntimeContext,
   withSayuriTurnOptions,
 } from "./turn-context";
-import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 
 function runningTask() {
   let task = createSayuriTask({

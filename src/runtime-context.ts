@@ -76,9 +76,7 @@ export interface RuntimeToolExecutionControl {
   grantApproval?(
     grant: RuntimeToolApprovalGrant,
   ): RuntimeToolApprovalDecision | Promise<RuntimeToolApprovalDecision>;
-  record?(
-    outcome: RuntimeToolExecutionOutcome,
-  ): void | Promise<void>;
+  record?(outcome: RuntimeToolExecutionOutcome): void | Promise<void>;
 }
 
 export interface RuntimeContextSnapshot {

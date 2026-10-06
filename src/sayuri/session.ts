@@ -5,11 +5,11 @@ import type {
   LettaStreamingResponse,
 } from "@letta-ai/letta-client/resources/agents/messages";
 import {
-  sendMessageStreamWithBackend,
   type SendMessageStreamOptions,
   type SendMessageStreamRequestOptions,
+  sendMessageStreamWithBackend,
 } from "@/agent/message";
-import { getBackend, type Backend } from "@/backend";
+import { type Backend, getBackend } from "@/backend";
 import type { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import {
   createDurableSayuriExecutionController,
@@ -17,8 +17,8 @@ import {
   type SayuriExecutionController,
 } from "./execution-control";
 import {
-  configureSayuriModelRuntime,
   type ConfigureSayuriModelRuntimeInput,
+  configureSayuriModelRuntime,
   type SayuriModelRuntimeDescriptor,
   verifySayuriModelRuntime,
 } from "./model-runtime";
@@ -27,15 +27,12 @@ import {
   FileSayuriBrainStateStore,
   type SayuriBrainStateStore,
 } from "./state-store";
+import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
   type SayuriTaskRegistry,
 } from "./task-registry";
-import {
-  createSayuriTask,
-  transitionSayuriTask,
-} from "./task-lifecycle";
 import { withSayuriTurnOptions } from "./turn-context";
 
 export interface SayuriPrimarySession {
@@ -64,15 +61,19 @@ export interface BootstrapSayuriPrimarySessionInput {
   now?: string;
 }
 
-function assertSessionIdentity(input: BootstrapSayuriPrimarySessionInput): void {
+function assertSessionIdentity(
+  input: BootstrapSayuriPrimarySessionInput,
+): void {
   if (!input.projectId.trim()) {
     throw new Error("Sayuri session projectId is required.");
   }
-  if (!input.agentId.trim()) throw new Error("Sayuri session agentId is required.");
+  if (!input.agentId.trim())
+    throw new Error("Sayuri session agentId is required.");
   if (!input.conversationId.trim()) {
     throw new Error("Sayuri session conversationId is required.");
   }
-  if (!input.taskId.trim()) throw new Error("Sayuri session taskId is required.");
+  if (!input.taskId.trim())
+    throw new Error("Sayuri session taskId is required.");
   if (!input.scopeRoot.trim()) {
     throw new Error("Sayuri session scopeRoot is required.");
   }
@@ -137,9 +138,7 @@ export async function bootstrapSayuriPrimarySession(
   let resumed = false;
   if (snapshot) {
     if (input.goal && input.goal.trim() !== snapshot.task.goal) {
-      throw new Error(
-        "Refusing to resume Sayuri task with a different goal.",
-      );
+      throw new Error("Refusing to resume Sayuri task with a different goal.");
     }
     if (
       input.plan &&

@@ -1,12 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import { classifySayuriToolRisk } from "./tool-risk";
 import type { SayuriPlan } from "./planner";
 import type { SayuriTaskState } from "./task-lifecycle";
+import { classifySayuriToolRisk } from "./tool-risk";
 
-export type SayuriSubagentLeaseMode =
-  | "read-only"
-  | "scoped-project-mutation";
+export type SayuriSubagentLeaseMode = "read-only" | "scoped-project-mutation";
 
 export interface SayuriSubagentCapabilityLease {
   id: string;

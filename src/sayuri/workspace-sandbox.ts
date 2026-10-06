@@ -26,10 +26,7 @@ export function resolveSayuriWorkspaceSandbox(
   }
 
   return {
-    sandbox: resolveWorkspaceSandbox(
-      { root, isolationRoot },
-      { availability },
-    ),
+    sandbox: resolveWorkspaceSandbox({ root, isolationRoot }, { availability }),
     availability,
   };
 }

@@ -38,9 +38,9 @@ export function progressSayuriPlanFromVerifiedStep(input: {
     );
   }
 
-  const receiptIds = [...new Set(input.receiptIds.map((id) => id.trim()))].filter(
-    Boolean,
-  );
+  const receiptIds = [
+    ...new Set(input.receiptIds.map((id) => id.trim())),
+  ].filter(Boolean);
   if (target.requiresEvidence && receiptIds.length === 0) {
     throw new Error(
       `Plan step "${input.stepId}" requires verified evidence receipts.`,
@@ -65,15 +65,12 @@ export function progressSayuriPlanFromVerifiedStep(input: {
     step.id === target.id ? completedTarget : { ...step },
   );
   const completedIds = new Set(
-    steps
-      .filter((step) => step.status === "completed")
-      .map((step) => step.id),
+    steps.filter((step) => step.status === "completed").map((step) => step.id),
   );
 
   const nextIndex = steps.findIndex(
     (step) =>
-      step.status === "pending" &&
-      dependenciesComplete(step, completedIds),
+      step.status === "pending" && dependenciesComplete(step, completedIds),
   );
   if (nextIndex >= 0) {
     steps = steps.map((step, index) =>

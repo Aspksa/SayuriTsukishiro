@@ -533,27 +533,27 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
   }
 
   private exactModelSelectionForTurn(input: ProviderTurnInput): {
-  model: string;
-  modelSettings: Record<string, unknown>;
-} {
-  const route = input.modelRoute;
-  if (!route) {
+    model: string;
+    modelSettings: Record<string, unknown>;
+  } {
+    const route = input.modelRoute;
+    if (!route) {
+      return {
+        model: input.agent.model,
+        modelSettings: input.agent.model_settings,
+      };
+    }
+    if (route.exact !== true || !route.modelHandle.trim()) {
+      throw new Error("Runtime model route must name one exact model.");
+    }
     return {
-      model: input.agent.model,
-      modelSettings: input.agent.model_settings,
+      model: route.modelHandle,
+      modelSettings: {
+        ...input.agent.model_settings,
+        provider_type: route.providerType,
+      },
     };
   }
-  if (route.exact !== true || !route.modelHandle.trim()) {
-    throw new Error("Runtime model route must name one exact model.");
-  }
-  return {
-    model: route.modelHandle,
-    modelSettings: {
-      ...input.agent.model_settings,
-      provider_type: route.providerType,
-    },
-  };
-}
 
   private async compactBeforeProviderCall(
     input: ProviderTurnInput,

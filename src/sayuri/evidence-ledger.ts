@@ -9,11 +9,7 @@ export type SayuriEvidenceKind =
 export type SayuriEvidenceTrust = "direct" | "derived" | "reported";
 export type SayuriEvidenceOutcome = "success" | "error" | "denied";
 
-export type SayuriEvidenceMetadataValue =
-  | string
-  | number
-  | boolean
-  | null;
+export type SayuriEvidenceMetadataValue = string | number | boolean | null;
 
 export interface SayuriEvidenceReceipt {
   id: string;

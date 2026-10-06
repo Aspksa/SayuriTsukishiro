@@ -1,24 +1,16 @@
 import { randomUUID } from "node:crypto";
-import {
-  mkdir,
-  readFile,
-  rename,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { registerScheduledTaskAdmissionHandler } from "@/cron/scheduled-admission";
 import type { ScheduledTaskAdmissionInput } from "@/cron/scheduled-admission";
+import { registerScheduledTaskAdmissionHandler } from "@/cron/scheduled-admission";
 import { withFileLock } from "@/utils/file-lock";
-import {
-  FileSayuriGoalStore,
-  type SayuriGoalStore,
-} from "./goal-manager";
+import { FileSayuriGoalStore, type SayuriGoalStore } from "./goal-manager";
 import { resolveSayuriStateRoot } from "./state-store";
+import { isUnfinishedSayuriTaskStatus } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   type SayuriTaskRegistry,
 } from "./task-registry";
-import { isUnfinishedSayuriTaskStatus } from "./task-lifecycle";
 
 const OPEN = "<sayuri-work-intent>";
 const CLOSE = "</sayuri-work-intent>";
@@ -72,7 +64,9 @@ function normalizePriority(value: number | undefined): number {
   return priority;
 }
 
-export function buildSayuriCronIntentPrompt(spec: SayuriCronIntentSpec): string {
+export function buildSayuriCronIntentPrompt(
+  spec: SayuriCronIntentSpec,
+): string {
   const normalized = {
     projectId: spec.projectId.trim(),
     objective: spec.objective.trim(),
@@ -150,7 +144,10 @@ export function parseSayuriCronIntentPrompt(
 
 export interface SayuriCronIntentStore {
   save(intent: SayuriCronWorkIntent): Promise<void>;
-  get(projectId: string, intentId: string): Promise<SayuriCronWorkIntent | null>;
+  get(
+    projectId: string,
+    intentId: string,
+  ): Promise<SayuriCronWorkIntent | null>;
   list(projectId: string): Promise<SayuriCronWorkIntent[]>;
 }
 
@@ -208,11 +205,15 @@ export class FileSayuriCronIntentStore implements SayuriCronIntentStore {
         const temp = `${target}.${process.pid}.${randomUUID()}.tmp`;
         await writeFile(
           temp,
-          `${JSON.stringify({
-            schemaVersion: 1,
-            projectId: intent.projectId,
-            intents,
-          }, null, 2)}\n`,
+          `${JSON.stringify(
+            {
+              schemaVersion: 1,
+              projectId: intent.projectId,
+              intents,
+            },
+            null,
+            2,
+          )}\n`,
           "utf8",
         );
         await rename(temp, target);
@@ -225,9 +226,11 @@ export class FileSayuriCronIntentStore implements SayuriCronIntentStore {
     projectId: string,
     intentId: string,
   ): Promise<SayuriCronWorkIntent | null> {
-    return (await this.read(projectId)).intents.find(
-      (intent) => intent.id === intentId,
-    ) ?? null;
+    return (
+      (await this.read(projectId)).intents.find(
+        (intent) => intent.id === intentId,
+      ) ?? null
+    );
   }
 
   async list(projectId: string): Promise<SayuriCronWorkIntent[]> {
@@ -239,9 +242,7 @@ function intentIdFor(input: ScheduledTaskAdmissionInput): string {
   return `cron-${input.task.id}-${input.timing.intendedOccurrence.getTime()}`;
 }
 
-export function createSayuriCronAdmissionHandler(
-  store: SayuriCronIntentStore,
-) {
+export function createSayuriCronAdmissionHandler(store: SayuriCronIntentStore) {
   return async (input: ScheduledTaskAdmissionInput) => {
     let spec: SayuriCronIntentSpec | null;
     try {
@@ -291,7 +292,9 @@ export function installSayuriCronAdmission(
   store: SayuriCronIntentStore = new FileSayuriCronIntentStore(),
 ): void {
   if (defaultAdmissionInstalled) return;
-  registerScheduledTaskAdmissionHandler(createSayuriCronAdmissionHandler(store));
+  registerScheduledTaskAdmissionHandler(
+    createSayuriCronAdmissionHandler(store),
+  );
   defaultAdmissionInstalled = true;
 }
 
@@ -309,9 +312,9 @@ export async function admitNextSayuriCronIntent(input: {
 }): Promise<SayuriCronIntentAdmissionDecision> {
   const goalStore = input.goalStore ?? new FileSayuriGoalStore();
   const taskRegistry = input.taskRegistry ?? new FileSayuriTaskRegistry();
-  const unfinished = (await taskRegistry.listProjectTasks(input.projectId)).find(
-    (task) => isUnfinishedSayuriTaskStatus(task.status),
-  );
+  const unfinished = (
+    await taskRegistry.listProjectTasks(input.projectId)
+  ).find((task) => isUnfinishedSayuriTaskStatus(task.status));
   if (unfinished) {
     return { kind: "deferred-active-task", taskId: unfinished.taskId };
   }

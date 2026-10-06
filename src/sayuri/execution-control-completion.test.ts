@@ -1,8 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { SayuriEvidenceLedger } from "./evidence-ledger";
-import {
-  createSayuriExecutionController,
-} from "./execution-control";
+import { createSayuriExecutionController } from "./execution-control";
 import {
   checkpointSayuriTask,
   createSayuriTask,

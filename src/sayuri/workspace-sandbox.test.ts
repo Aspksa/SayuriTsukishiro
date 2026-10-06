@@ -27,7 +27,9 @@ describe("Sayuri workspace sandbox policy", () => {
         backend: "seatbelt",
         reason: "test backend",
       });
-      expect(result.sandbox?.root).toBe(resolve(scopeRoot).replaceAll("\\", "/"));
+      expect(result.sandbox?.root).toBe(
+        resolve(scopeRoot).replaceAll("\\", "/"),
+      );
       expect(result.sandbox?.isolationRoot).toBe(
         resolve(dirname(scopeRoot)).replaceAll("\\", "/"),
       );
@@ -37,7 +39,9 @@ describe("Sayuri workspace sandbox policy", () => {
   });
 
   test("system mutation needs a matching active workspace sandbox", async () => {
-    const isolationRoot = await mkdtemp(join(tmpdir(), "sayuri-system-sandbox-"));
+    const isolationRoot = await mkdtemp(
+      join(tmpdir(), "sayuri-system-sandbox-"),
+    );
     const scopeRoot = join(isolationRoot, "project");
     await mkdir(scopeRoot);
     try {

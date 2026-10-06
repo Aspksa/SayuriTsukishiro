@@ -53,7 +53,8 @@ export function validateSayuriPlan(plan: SayuriPlan): SayuriPlanValidation {
   if (Number.isNaN(Date.parse(plan.createdAt))) {
     errors.push("Plan createdAt must be ISO-compatible.");
   }
-  if (plan.steps.length === 0) errors.push("Plan must contain at least one step.");
+  if (plan.steps.length === 0)
+    errors.push("Plan must contain at least one step.");
 
   const ids = new Set<string>();
   let inProgress = 0;
@@ -102,9 +103,7 @@ export function validateSayuriPlan(plan: SayuriPlan): SayuriPlanValidation {
   return { valid: errors.length === 0, errors };
 }
 
-export function getNextSayuriPlanStep(
-  plan: SayuriPlan,
-): SayuriPlanStep | null {
+export function getNextSayuriPlanStep(plan: SayuriPlan): SayuriPlanStep | null {
   const active = plan.steps.find((step) => step.status === "in-progress");
   if (active) return { ...active };
   const pending = plan.steps.find((step) => step.status === "pending");

@@ -2,31 +2,29 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  superviseSayuriProject,
+  superviseSayuriSession,
+} from "./cognitive-loop-supervisor";
 import { createSayuriExecutionController } from "./execution-control";
 import type { SayuriPrimarySession } from "./session";
 import { FileSayuriBrainStateStore } from "./state-store";
-import {
-  FileSayuriTaskRegistry,
-  ProjectIndexedSayuriBrainStateStore,
-} from "./task-registry";
 import {
   checkpointSayuriTask,
   createSayuriTask,
   transitionSayuriTask,
 } from "./task-lifecycle";
 import {
-  superviseSayuriProject,
-  superviseSayuriSession,
-} from "./cognitive-loop-supervisor";
+  FileSayuriTaskRegistry,
+  ProjectIndexedSayuriBrainStateStore,
+} from "./task-registry";
 
 describe("Sayuri Cognitive Loop Supervisor", () => {
   const roots: string[] = [];
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -114,9 +112,9 @@ describe("Sayuri Cognitive Loop Supervisor", () => {
     if (result.kind !== "continue") throw new Error("Expected continue");
     expect(result.step.id).toBe("second");
     expect(result.session.controller.task.status).toBe("running");
-    expect(
-      (await taskRegistry.getTask("project-a", task.id))?.status,
-    ).toBe("running");
+    expect((await taskRegistry.getTask("project-a", task.id))?.status).toBe(
+      "running",
+    );
   });
 
   test("refuses to choose between multiple unfinished project tasks", async () => {

@@ -10,17 +10,17 @@ import {
   type SayuriBrainStateStore,
 } from "./state-store";
 import {
+  isTerminalSayuriTaskStatus,
+  type SayuriTaskState,
+  type SayuriTaskStatus,
+  transitionSayuriTask,
+} from "./task-lifecycle";
+import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
   type SayuriProjectTaskEntry,
   type SayuriTaskRegistry,
 } from "./task-registry";
-import {
-  isTerminalSayuriTaskStatus,
-  transitionSayuriTask,
-  type SayuriTaskState,
-  type SayuriTaskStatus,
-} from "./task-lifecycle";
 
 export type SayuriRecoveryDisposition =
   | "executable"
@@ -136,7 +136,8 @@ export async function recoverLatestSayuriSessionForProject(input: {
   modelsRuntime?: LocalPiModelsRuntime;
   now?: string;
 }): Promise<SayuriProjectRecoveryResult> {
-  if (!input.projectId.trim()) throw new Error("Recovery projectId is required.");
+  if (!input.projectId.trim())
+    throw new Error("Recovery projectId is required.");
   const inner = input.stateStore ?? new FileSayuriBrainStateStore();
   const registry = input.taskRegistry ?? new FileSayuriTaskRegistry();
   const entries = await registry.listProjectTasks(input.projectId);

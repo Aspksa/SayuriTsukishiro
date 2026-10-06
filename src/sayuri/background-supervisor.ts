@@ -57,8 +57,7 @@ export async function superviseSayuriBackgroundForSession(input: {
   const records = recovered
     .filter(
       (record) =>
-        record.lease.parentTaskId === taskId &&
-        record.status !== "handed-off",
+        record.lease.parentTaskId === taskId && record.status !== "handed-off",
     )
     .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
 

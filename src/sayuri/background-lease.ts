@@ -1,17 +1,12 @@
 import { randomUUID } from "node:crypto";
-import {
-  mkdir,
-  readFile,
-  rename,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { withFileLock } from "@/utils/file-lock";
 import type { SayuriEvidenceReceipt } from "./evidence-ledger";
 import { resolveSayuriStateRoot } from "./state-store";
 import {
-  validateSayuriSubagentCapabilityLease,
   type SayuriSubagentCapabilityLease,
+  validateSayuriSubagentCapabilityLease,
 } from "./subagent-lease";
 
 export type SayuriBackgroundLeaseStatus =
@@ -67,13 +62,18 @@ export function validateSayuriBackgroundLeaseRecord(
     ["ownerAgentId", record.ownerAgentId],
     ["ownerConversationId", record.ownerConversationId],
   ] as const) {
-    if (!value.trim()) throw new Error(`Background lease ${label} is required.`);
+    if (!value.trim())
+      throw new Error(`Background lease ${label} is required.`);
   }
   if (record.assignment !== undefined && !record.assignment.trim()) {
-    throw new Error("Background lease assignment must be non-empty when present.");
+    throw new Error(
+      "Background lease assignment must be non-empty when present.",
+    );
   }
   if (record.id !== record.lease.id) {
-    throw new Error("Background lease record id must match capability lease id.");
+    throw new Error(
+      "Background lease record id must match capability lease id.",
+    );
   }
   validateTimestamp(record.createdAt, "Background lease createdAt");
   validateTimestamp(record.updatedAt, "Background lease updatedAt");
@@ -85,7 +85,9 @@ export function validateSayuriBackgroundLeaseRecord(
     record.lease.expiresAt &&
     Date.parse(record.deadlineAt) > Date.parse(record.lease.expiresAt)
   ) {
-    throw new Error("Background deadline cannot outlive capability lease expiry.");
+    throw new Error(
+      "Background deadline cannot outlive capability lease expiry.",
+    );
   }
   if (record.status === "completed" && !record.resultReceipt) {
     throw new Error("Completed background lease requires a result receipt.");
@@ -134,7 +136,9 @@ export function transitionSayuriBackgroundLease(
     error?: string;
   } = {},
 ): SayuriBackgroundLeaseRecord {
-  const allowed: Readonly<Record<SayuriBackgroundLeaseStatus, readonly SayuriBackgroundLeaseStatus[]>> = {
+  const allowed: Readonly<
+    Record<SayuriBackgroundLeaseStatus, readonly SayuriBackgroundLeaseStatus[]>
+  > = {
     leased: ["running", "cancelled", "expired"],
     running: ["completed", "failed", "cancelled", "expired", "orphaned"],
     orphaned: ["running", "cancelled", "expired"],
@@ -213,9 +217,12 @@ export class FileSayuriBackgroundLeaseStore
       value.projectId !== projectId ||
       !Array.isArray(value.records)
     ) {
-      throw new Error("Background lease store schema/project identity is invalid.");
+      throw new Error(
+        "Background lease store schema/project identity is invalid.",
+      );
     }
-    for (const record of value.records) validateSayuriBackgroundLeaseRecord(record);
+    for (const record of value.records)
+      validateSayuriBackgroundLeaseRecord(record);
     return value;
   }
 
@@ -234,11 +241,15 @@ export class FileSayuriBackgroundLeaseStore
         const temp = `${target}.${process.pid}.${randomUUID()}.tmp`;
         await writeFile(
           temp,
-          `${JSON.stringify({
-            schemaVersion: 1,
-            projectId: record.projectId,
-            records,
-          }, null, 2)}\n`,
+          `${JSON.stringify(
+            {
+              schemaVersion: 1,
+              projectId: record.projectId,
+              records,
+            },
+            null,
+            2,
+          )}\n`,
           "utf8",
         );
         await rename(temp, target);
@@ -251,9 +262,11 @@ export class FileSayuriBackgroundLeaseStore
     projectId: string,
     leaseId: string,
   ): Promise<SayuriBackgroundLeaseRecord | null> {
-    return (await this.read(projectId)).records.find(
-      (record) => record.id === leaseId,
-    ) ?? null;
+    return (
+      (await this.read(projectId)).records.find(
+        (record) => record.id === leaseId,
+      ) ?? null
+    );
   }
 
   async list(projectId: string): Promise<SayuriBackgroundLeaseRecord[]> {

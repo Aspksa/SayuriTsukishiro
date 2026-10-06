@@ -2,27 +2,21 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  createSayuriExecutionController,
-} from "./execution-control";
+import { createSayuriExecutionController } from "./execution-control";
 import { FileSayuriBrainStateStore } from "./state-store";
-import {
-  createSayuriSubagentCapabilityLease,
-} from "./subagent-lease";
-import {
-  ProjectIndexedSayuriBrainStateStore,
-  FileSayuriTaskRegistry,
-} from "./task-registry";
+import { createSayuriSubagentCapabilityLease } from "./subagent-lease";
 import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
+import {
+  FileSayuriTaskRegistry,
+  ProjectIndexedSayuriBrainStateStore,
+} from "./task-registry";
 
 describe("Sayuri subagent evidence handoff", () => {
   const roots: string[] = [];
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -124,9 +118,9 @@ describe("Sayuri subagent evidence handoff", () => {
 
     const persisted = await stateStore.loadSnapshot(task.id);
     expect(persisted?.plan.steps[0]?.status).toBe("completed");
-    expect((await stateStore.loadReceipts(task.id)).map((item) => item.id)).toContain(
-      "receipt-child",
-    );
+    expect(
+      (await stateStore.loadReceipts(task.id)).map((item) => item.id),
+    ).toContain("receipt-child");
   });
 
   test("rejects a receipt forged for another child before persistence", async () => {

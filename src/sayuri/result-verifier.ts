@@ -1,8 +1,8 @@
 import type {
+  SayuriEvidenceLedger,
   SayuriEvidenceReceipt,
   SayuriEvidenceTrust,
 } from "./evidence-ledger";
-import { SayuriEvidenceLedger } from "./evidence-ledger";
 
 export type SayuriVerificationVerdict =
   | "verified"
@@ -66,7 +66,9 @@ export function verifySayuriResult(
     receipts.push(receipt);
   }
 
-  const unsuccessful = receipts.find((receipt) => receipt.outcome !== "success");
+  const unsuccessful = receipts.find(
+    (receipt) => receipt.outcome !== "success",
+  );
   if (unsuccessful) {
     return {
       verdict: "failed",

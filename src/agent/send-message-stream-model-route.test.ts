@@ -2,10 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { Stream } from "@letta-ai/letta-client/core/streaming";
 import type { LettaStreamingResponse } from "@letta-ai/letta-client/resources/agents/messages";
 import type { Backend } from "@/backend";
-import {
-  getRuntimeContext,
-  type RuntimeModelRoute,
-} from "@/runtime-context";
+import { getRuntimeContext, type RuntimeModelRoute } from "@/runtime-context";
 import { sendMessageStreamWithBackend } from "./message";
 
 describe("sendMessageStream model route propagation", () => {

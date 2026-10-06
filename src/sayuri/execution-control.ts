@@ -7,40 +7,35 @@ import {
   type RuntimeToolExecutionRequest,
   runWithRuntimeContext,
 } from "@/runtime-context";
-import {
-  decideSayuriAction,
-  type SayuriActionRisk,
-} from "./action-broker";
+import { decideSayuriAction, type SayuriActionRisk } from "./action-broker";
 import { evaluateSayuriCompletionGate } from "./completion-gate";
 import {
-  SayuriEvidenceLedger,
   type SayuriEvidenceKind,
+  SayuriEvidenceLedger,
   type SayuriEvidenceReceipt,
   type SayuriEvidenceTrust,
 } from "./evidence-ledger";
-import { type SayuriPlan, validateSayuriPlan } from "./planner";
 import { progressSayuriPlanFromVerifiedStep } from "./plan-progress";
-import {
-  sayuriStepAttemptPolicy,
-  sayuriStepCanBindTool,
-} from "./step-execution-policy";
+import { type SayuriPlan, validateSayuriPlan } from "./planner";
 import {
   type SayuriVerificationResult,
   verifySayuriResult,
 } from "./result-verifier";
-import {
-  validateSayuriSubagentEvidenceReceipt,
-} from "./subagent-evidence";
-import type { SayuriSubagentCapabilityLease } from "./subagent-lease";
 import type { SayuriBrainStateStore } from "./state-store";
+import {
+  sayuriStepAttemptPolicy,
+  sayuriStepCanBindTool,
+} from "./step-execution-policy";
+import { validateSayuriSubagentEvidenceReceipt } from "./subagent-evidence";
+import type { SayuriSubagentCapabilityLease } from "./subagent-lease";
 import {
   checkpointSayuriTask,
   type SayuriTaskState,
   type SayuriTaskStatus,
   transitionSayuriTask,
 } from "./task-lifecycle";
-import { resolveSayuriWorkspaceSandbox } from "./workspace-sandbox";
 import { classifySayuriToolRisk } from "./tool-risk";
+import { resolveSayuriWorkspaceSandbox } from "./workspace-sandbox";
 
 export { classifySayuriToolRisk } from "./tool-risk";
 
@@ -103,9 +98,7 @@ function requestInsideScope(
   return target ? isWithinRoot(scopeRoot, target) : true;
 }
 
-function receiptKind(
-  request: RuntimeToolExecutionRequest,
-): SayuriEvidenceKind {
+function receiptKind(request: RuntimeToolExecutionRequest): SayuriEvidenceKind {
   if (request.toolKind === "external") return "external-response";
   if (
     ["ApplyPatch", "Edit", "Write", "write_artifact_file"].includes(
@@ -132,10 +125,7 @@ export class SayuriExecutionController {
   #plan: SayuriPlan;
   readonly #ledger: SayuriEvidenceLedger;
   readonly #stateStore?: SayuriBrainStateStore;
-  readonly #authorizations = new Map<
-    string,
-    SayuriPlannedToolAuthorization
-  >();
+  readonly #authorizations = new Map<string, SayuriPlannedToolAuthorization>();
   readonly #executionByToolCall = new Map<string, string>();
   readonly #metadataByExecution = new Map<string, SayuriExecutionMetadata>();
   readonly #consumedApprovalToolCallIds = new Set<string>();
@@ -221,9 +211,7 @@ export class SayuriExecutionController {
       (candidate) => candidate.id === authorization.stepId,
     );
     if (!step) {
-      throw new Error(
-        `Plan step "${authorization.stepId}" does not exist.`,
-      );
+      throw new Error(`Plan step "${authorization.stepId}" does not exist.`);
     }
     if (step.status !== "in-progress") {
       throw new Error(
@@ -319,8 +307,7 @@ export class SayuriExecutionController {
     this.registerAuthorization({
       toolCallId: grant.toolCallId,
       stepId: selected.id,
-      scopeApproved:
-        risk === "project-mutation" ? true : sandboxMatchesScope,
+      scopeApproved: risk === "project-mutation" ? true : sandboxMatchesScope,
       approvalGranted: true,
       toolName: grant.toolName,
       argsFingerprint: fingerprintArgs(grant.args),
@@ -503,9 +490,7 @@ export class SayuriExecutionController {
     await this.#stateStore?.saveSnapshot(this.#task, this.#plan);
   }
 
-  private async appendReceipt(
-    receipt: SayuriEvidenceReceipt,
-  ): Promise<void> {
+  private async appendReceipt(receipt: SayuriEvidenceReceipt): Promise<void> {
     this.#ledger.append(receipt);
     try {
       await this.#stateStore?.appendReceipt(this.#task.id, receipt);
@@ -643,9 +628,7 @@ export class SayuriExecutionController {
     };
   }
 
-  private async record(
-    outcome: RuntimeToolExecutionOutcome,
-  ): Promise<void> {
+  private async record(outcome: RuntimeToolExecutionOutcome): Promise<void> {
     const executionId = outcome.executionId;
     if (!executionId) {
       throw new Error("Controlled tool execution is missing executionId.");
@@ -666,9 +649,7 @@ export class SayuriExecutionController {
         tool: outcome.request.toolName,
         toolKind: outcome.request.toolKind,
         durationMs: outcome.durationMs,
-        ...(metadata?.toolCallId
-          ? { toolCallId: metadata.toolCallId }
-          : {}),
+        ...(metadata?.toolCallId ? { toolCallId: metadata.toolCallId } : {}),
       },
     });
 
@@ -688,8 +669,7 @@ export class SayuriExecutionController {
         const policy = sayuriStepAttemptPolicy(step);
         if (
           errors >= policy.maxErrors &&
-          (this.#task.status === "running" ||
-            this.#task.status === "verifying")
+          (this.#task.status === "running" || this.#task.status === "verifying")
         ) {
           this.#task = transitionSayuriTask(
             this.#task,

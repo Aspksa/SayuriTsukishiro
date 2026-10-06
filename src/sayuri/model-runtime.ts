@@ -7,12 +7,12 @@ import {
 import type { RuntimeModelRoute } from "@/runtime-context";
 import {
   createSayuriModelGatewayConfig,
+  type RedactedSayuriModelGatewayConfig,
   redactSayuriModelGatewayConfig,
   SAYURI_MODEL_ID,
   SAYURI_RUNTIME_MODEL_HANDLE,
   SAYURI_RUNTIME_PROVIDER_NAME,
   SAYURI_RUNTIME_PROVIDER_TYPE,
-  type RedactedSayuriModelGatewayConfig,
   type SayuriModelGatewayInput,
 } from "./model-gateway";
 

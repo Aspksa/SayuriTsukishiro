@@ -49,9 +49,7 @@ describe("Sayuri cron admission", () => {
 
   afterEach(async () => {
     await Promise.all(
-      roots.splice(0).map((root) =>
-        rm(root, { recursive: true, force: true }),
-      ),
+      roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
     );
   });
 
@@ -185,7 +183,8 @@ describe("Sayuri cron admission", () => {
       now: "2026-10-06T13:00:06.000Z",
     });
     expect(admitted.kind).toBe("goal-created");
-    if (admitted.kind !== "goal-created") throw new Error("Expected goal-created");
+    if (admitted.kind !== "goal-created")
+      throw new Error("Expected goal-created");
     expect((await goals.getGoal("project-a", admitted.goalId))?.objective).toBe(
       "Inspect scheduled project state",
     );

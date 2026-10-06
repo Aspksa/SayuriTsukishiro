@@ -24,10 +24,7 @@ import {
   markLocalStateChunkOnly,
   type ProviderStreamPart,
 } from "@/backend/local/local-stream-chunks";
-import {
-  getRuntimeContext,
-  type RuntimeModelRoute,
-} from "@/runtime-context";
+import { getRuntimeContext, type RuntimeModelRoute } from "@/runtime-context";
 import type {
   HeadlessTurnBody,
   HeadlessTurnExecutor,

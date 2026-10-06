@@ -79,8 +79,9 @@ function assertTimestamp(timestamp: string): void {
 }
 
 export function isSayuriTaskStatus(value: unknown): value is SayuriTaskStatus {
-  return typeof value === "string" && SAYURI_TASK_STATUSES.has(
-    value as SayuriTaskStatus,
+  return (
+    typeof value === "string" &&
+    SAYURI_TASK_STATUSES.has(value as SayuriTaskStatus)
   );
 }
 
@@ -88,7 +89,9 @@ export function isTerminalSayuriTaskStatus(status: SayuriTaskStatus): boolean {
   return TERMINAL_STATUSES.has(status);
 }
 
-export function isUnfinishedSayuriTaskStatus(status: SayuriTaskStatus): boolean {
+export function isUnfinishedSayuriTaskStatus(
+  status: SayuriTaskStatus,
+): boolean {
   return !isTerminalSayuriTaskStatus(status);
 }
 

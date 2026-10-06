@@ -2,8 +2,7 @@ export const SAYURI_MODEL_PROVIDER = "cloud.ru";
 export const SAYURI_MODEL_ID = "DeepSeek-V4-Flash";
 export const SAYURI_RUNTIME_PROVIDER_TYPE = "openai-compatible";
 export const SAYURI_RUNTIME_PROVIDER_NAME = "openai-compatible";
-export const SAYURI_RUNTIME_MODEL_HANDLE =
-  `${SAYURI_RUNTIME_PROVIDER_TYPE}/${SAYURI_MODEL_ID}`;
+export const SAYURI_RUNTIME_MODEL_HANDLE = `${SAYURI_RUNTIME_PROVIDER_TYPE}/${SAYURI_MODEL_ID}`;
 
 export interface SayuriModelGatewayInput {
   baseUrl: string;
