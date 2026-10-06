@@ -34,6 +34,7 @@ export interface SayuriBackgroundLeaseRecord {
   createdAt: string;
   updatedAt: string;
   deadlineAt: string;
+  assignment?: string;
   resultReceipt?: SayuriEvidenceReceipt;
   error?: string;
   handoffAt?: string;
@@ -68,6 +69,9 @@ export function validateSayuriBackgroundLeaseRecord(
   ] as const) {
     if (!value.trim()) throw new Error(`Background lease ${label} is required.`);
   }
+  if (record.assignment !== undefined && !record.assignment.trim()) {
+    throw new Error("Background lease assignment must be non-empty when present.");
+  }
   if (record.id !== record.lease.id) {
     throw new Error("Background lease record id must match capability lease id.");
   }
@@ -100,6 +104,7 @@ export function createSayuriBackgroundLeaseRecord(input: {
   ownerConversationId: string;
   lease: SayuriSubagentCapabilityLease;
   deadlineAt: string;
+  assignment?: string;
   now?: string;
 }): SayuriBackgroundLeaseRecord {
   const now = input.now ?? new Date().toISOString();
@@ -114,6 +119,7 @@ export function createSayuriBackgroundLeaseRecord(input: {
     createdAt: now,
     updatedAt: now,
     deadlineAt: input.deadlineAt,
+    ...(input.assignment ? { assignment: input.assignment } : {}),
   };
   validateSayuriBackgroundLeaseRecord(record);
   return record;
@@ -259,6 +265,7 @@ export async function recoverSayuriBackgroundLeases(input: {
   projectId: string;
   store: SayuriBackgroundLeaseStore;
   now?: string;
+  isLive?: (leaseId: string) => boolean;
 }): Promise<SayuriBackgroundLeaseRecord[]> {
   const now = input.now ?? new Date().toISOString();
   const records = await input.store.list(input.projectId);
@@ -270,7 +277,10 @@ export async function recoverSayuriBackgroundLeases(input: {
       Date.parse(record.deadlineAt) <= Date.parse(now)
     ) {
       next = transitionSayuriBackgroundLease(record, "expired", { now });
-    } else if (record.status === "running") {
+    } else if (
+      record.status === "running" &&
+      !(input.isLive?.(record.id) ?? false)
+    ) {
       next = transitionSayuriBackgroundLease(record, "orphaned", { now });
     }
     if (next !== record) await input.store.save(next);

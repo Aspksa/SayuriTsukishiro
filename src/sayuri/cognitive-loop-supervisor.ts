@@ -1,5 +1,12 @@
 import type { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import {
+  FileSayuriBackgroundLeaseStore,
+  type SayuriBackgroundLeaseStore,
+} from "./background-lease";
+import {
+  superviseSayuriBackgroundForSession,
+} from "./background-supervisor";
+import {
   FileSayuriGoalEvidenceStore,
   type SayuriGoalEvidenceStore,
 } from "./goal-success";
@@ -45,6 +52,17 @@ export type SayuriCognitiveLoopDecision =
       task: SayuriProjectTaskEntry;
     }
   | {
+      kind: "background-running";
+      taskId: string;
+      leaseId: string;
+    }
+  | {
+      kind: "background-blocked";
+      taskId: string;
+      leaseId: string;
+      reason: string;
+    }
+  | {
       kind: "blocked-plan";
       taskId: string;
       reasons: readonly string[];
@@ -73,10 +91,37 @@ export async function superviseSayuriSession(input: {
   modelGateway: ConfigureSayuriModelRuntimeInput;
   goalStore?: SayuriGoalStore;
   goalEvidenceStore?: SayuriGoalEvidenceStore;
+  backgroundLeaseStore?: SayuriBackgroundLeaseStore;
   modelsRuntime?: LocalPiModelsRuntime;
   now?: string;
 }): Promise<SayuriCognitiveLoopDecision> {
-  const task = input.session.controller.task;
+  let task = input.session.controller.task;
+
+  const background = await superviseSayuriBackgroundForSession({
+    session: input.session,
+    ...(input.backgroundLeaseStore
+      ? { store: input.backgroundLeaseStore }
+      : {}),
+    ...(input.now ? { now: input.now } : {}),
+  });
+  if (background.kind === "background-running") {
+    return {
+      kind: "background-running",
+      taskId: task.id,
+      leaseId: background.record.id,
+    };
+  }
+  if (background.kind === "background-blocked") {
+    return {
+      kind: "background-blocked",
+      taskId: task.id,
+      leaseId: background.record.id,
+      reason: background.reason,
+    };
+  }
+  if (background.kind === "handoff-complete") {
+    task = input.session.controller.task;
+  }
 
   if (
     (task.status === "checkpointed" || task.status === "verifying") &&
@@ -156,6 +201,7 @@ export async function superviseSayuriProject(input: {
   taskRegistry?: SayuriTaskRegistry;
   goalStore?: SayuriGoalStore;
   goalEvidenceStore?: SayuriGoalEvidenceStore;
+  backgroundLeaseStore?: SayuriBackgroundLeaseStore;
   modelsRuntime?: LocalPiModelsRuntime;
   now?: string;
   taskIdFactory?: () => string;
@@ -165,6 +211,8 @@ export async function superviseSayuriProject(input: {
   const goalStore = input.goalStore ?? new FileSayuriGoalStore();
   const goalEvidenceStore =
     input.goalEvidenceStore ?? new FileSayuriGoalEvidenceStore();
+  const backgroundLeaseStore =
+    input.backgroundLeaseStore ?? new FileSayuriBackgroundLeaseStore();
 
   const unfinished = (await taskRegistry.listProjectTasks(input.projectId)).filter(
     (task) => isUnfinishedSayuriTaskStatus(task.status),
@@ -200,6 +248,7 @@ export async function superviseSayuriProject(input: {
     modelGateway: input.modelGateway,
     goalStore,
     goalEvidenceStore,
+    backgroundLeaseStore,
     ...(input.modelsRuntime ? { modelsRuntime: input.modelsRuntime } : {}),
     ...(input.now ? { now: input.now } : {}),
   });

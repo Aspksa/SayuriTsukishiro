@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.80",
-  "milestone": "Durable Background Execution Leases",
+  "version": "0.1.81",
+  "milestone": "Background Work Supervisor",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "durable-background-execution-leases",
-  "next_action": "Add Background Work Supervisor integration: surface orphaned/completed/expired leases to the cognitive loop, auto-handoff completed results before new planning, never auto-relaunch orphaned mutations, and only resume explicitly safe read-only leases."
+  "current_stage": "background-work-supervisor",
+  "next_action": "Add Cron/Background Admission Control: scheduled triggers may create work intents, but must enter through project goal/task recovery, single-active-task arbitration, capability leases, and Action Broker; no cron callback may directly execute mutations."
 }
