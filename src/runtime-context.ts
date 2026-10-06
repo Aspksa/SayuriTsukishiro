@@ -18,6 +18,40 @@ export interface RuntimeWorkspaceSandbox {
   isolationRoot: string;
 }
 
+export type RuntimeToolExecutionKind = "builtin" | "mod" | "external";
+
+export interface RuntimeToolExecutionRequest {
+  toolName: string;
+  toolKind: RuntimeToolExecutionKind;
+  toolCallId?: string | null;
+  args: Readonly<Record<string, unknown>>;
+  workingDirectory: string;
+  agentId?: string | null;
+  conversationId?: string | null;
+}
+
+export interface RuntimeToolExecutionDecision {
+  decision: "allow" | "deny";
+  executionId?: string;
+  reason?: string;
+}
+
+export interface RuntimeToolExecutionOutcome {
+  request: RuntimeToolExecutionRequest;
+  executionId?: string;
+  status: "success" | "error";
+  durationMs: number;
+}
+
+export interface RuntimeToolExecutionControl {
+  authorize(
+    request: RuntimeToolExecutionRequest,
+  ): RuntimeToolExecutionDecision | Promise<RuntimeToolExecutionDecision>;
+  record?(
+    outcome: RuntimeToolExecutionOutcome,
+  ): void | Promise<void>;
+}
+
 export interface RuntimeContextSnapshot {
   /** Listener transport connection that owns the current turn, when present. */
   connectionId?: string | null;
@@ -40,6 +74,8 @@ export interface RuntimeContextSnapshot {
   toolContextId?: string | null;
   permissionMode?: RuntimePermissionMode;
   workspaceSandbox?: RuntimeWorkspaceSandbox;
+  /** Optional higher-level policy boundary invoked immediately before tools run. */
+  toolExecutionControl?: RuntimeToolExecutionControl;
   executionSettings?: RuntimeExecutionSettings;
 }
 
