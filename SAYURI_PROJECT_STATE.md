@@ -1,35 +1,27 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.67  
-**Cognitive Core:** 0.11.0
+**Sayuri version:** 0.1.68  
+**Cognitive Core:** 0.12.0
 
-## Closed stage: Project Goal Manager
+## Closed stage: Planner v1 Proposal Boundary
 
-Sayuri now distinguishes long-term project goals from executable tasks.
+DeepSeek is now constrained to proposing plan structure only. The accepted
+proposal shape contains task/goal identity plus ordered steps with title, intent,
+optional intended tool, and backward-only dependencies.
 
-Goals are durable, project-scoped, priority ordered, dependency aware, and link
-to the task IDs created to pursue them. Goal selection is deterministic:
-paused, blocked, terminal, or dependency-incomplete goals cannot be selected.
+The proposal cannot declare risk, evidence policy, status, permissions,
+approval state, tool arguments, or receipts. Unknown fields are rejected.
 
-The work selector follows a stronger rule:
+Risk and evidence requirements are assigned deterministically from the intended
+tool by Sayuri code. The compiled plan is validated before it can reach
+execution control, and execution approval matching now also honors a
+planner-bound tool name when present.
 
-```
-unfinished task exists?
-  yes → resume it
-  no  → choose next eligible active goal
-           ↓
-       create Planner seed
-```
-
-This prevents a model from abandoning unfinished work simply because another
-goal looks more attractive. The LLM does not choose project priority or
-dependency satisfaction.
-
-A planner seed carries only task/project/goal identity, objective, constraints,
-and success criteria. It is not an execution plan and grants no permissions.
+This keeps the LLM useful for decomposition without turning plan text into
+authority.
 
 ## NEXT_ACTION
 
-**Build Planner v1 around a strict proposal envelope: DeepSeek-V4-Flash may
-propose ordered steps for a planner seed, but deterministic validation assigns
-risk/evidence requirements and the LLM never receives execution authority.**
+**Add a Planner Runtime adapter that requests one JSON proposal from the exact
+DeepSeek-V4-Flash route, parses it through Planner v1, and persists the compiled
+plan before any execution controller can be created.**

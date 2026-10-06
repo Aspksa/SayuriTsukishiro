@@ -13,6 +13,12 @@ export interface SayuriPlanStep {
   status: SayuriPlanStepStatus;
   risk: SayuriActionRisk;
   requiresEvidence: boolean;
+  /** Deterministic planner-selected tool family; never an approval grant. */
+  toolName?: string;
+  /** Human/model-readable intent without executable arguments. */
+  intent?: string;
+  /** Dependencies may only reference earlier plan steps. */
+  dependsOnStepIds?: readonly string[];
   receiptIds?: readonly string[];
 }
 
@@ -57,6 +63,19 @@ export function validateSayuriPlan(plan: SayuriPlan): SayuriPlanValidation {
       errors.push(`Plan step "${step.id || "<unknown>"}" requires a title.`);
     }
     if (ids.has(step.id)) errors.push(`Duplicate plan step id "${step.id}".`);
+    for (const dependency of step.dependsOnStepIds ?? []) {
+      if (!ids.has(dependency)) {
+        errors.push(
+          `Plan step "${step.id}" depends on missing or later step "${dependency}".`,
+        );
+      }
+    }
+    if (
+      step.dependsOnStepIds &&
+      new Set(step.dependsOnStepIds).size !== step.dependsOnStepIds.length
+    ) {
+      errors.push(`Plan step "${step.id}" has duplicate dependencies.`);
+    }
     ids.add(step.id);
     if (step.status === "in-progress") inProgress++;
 

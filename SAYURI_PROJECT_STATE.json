@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.67",
-  "milestone": "Project Goal Manager",
+  "version": "0.1.68",
+  "milestone": "Planner v1 Proposal Boundary",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "project-goal-manager",
-  "next_action": "Build Planner v1 around a strict proposal envelope: DeepSeek-V4-Flash may propose ordered steps for a planner seed, but deterministic validation assigns risk/evidence requirements and the LLM never receives execution authority."
+  "current_stage": "planner-v1-proposal-boundary",
+  "next_action": "Add a Planner Runtime adapter that requests one JSON proposal from the exact DeepSeek-V4-Flash route, parses it through Planner v1, and persists the compiled plan before any execution controller can be created."
 }

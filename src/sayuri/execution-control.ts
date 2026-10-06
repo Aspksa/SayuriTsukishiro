@@ -324,7 +324,9 @@ export class SayuriExecutionController {
     }
 
     const candidates = executablePlanSteps(this.#plan).filter(
-      (step) => RISK_RANK[step.risk] >= RISK_RANK[risk],
+      (step) =>
+        RISK_RANK[step.risk] >= RISK_RANK[risk] &&
+        (step.toolName === undefined || step.toolName === grant.toolName),
     );
     const inProgress = candidates.filter(
       (step) => step.status === "in-progress",
@@ -478,6 +480,8 @@ export class SayuriExecutionController {
       (risk === "read" || authorization?.scopeApproved === true);
     const stepCoversRisk =
       step !== undefined && RISK_RANK[step.risk] >= RISK_RANK[risk];
+    const stepToolMatches =
+      step?.toolName === undefined || step.toolName === request.toolName;
     const approvedToolMatches =
       authorization?.toolName === undefined ||
       authorization.toolName === request.toolName;
@@ -488,6 +492,7 @@ export class SayuriExecutionController {
       authorization !== undefined &&
       step !== undefined &&
       stepCoversRisk &&
+      stepToolMatches &&
       approvedToolMatches &&
       approvedArgsMatch &&
       step.status !== "completed" &&

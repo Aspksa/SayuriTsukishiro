@@ -6,6 +6,7 @@ export * from "./model-gateway";
 export * from "./model-runtime";
 export * from "./module-versions";
 export * from "./planner";
+export * from "./planner-v1";
 export * from "./result-verifier";
 export * from "./session";
 export * from "./state-store";
