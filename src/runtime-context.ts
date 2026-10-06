@@ -18,6 +18,15 @@ export interface RuntimeWorkspaceSandbox {
   isolationRoot: string;
 }
 
+export interface RuntimeModelRoute {
+  /** Exact runtime model handle; the lower layer must not choose a substitute. */
+  modelHandle: string;
+  /** Provider type expected by model resolution for this handle. */
+  providerType: string;
+  /** Exact routes never opt into provider/model fallback behavior. */
+  exact: true;
+}
+
 export type RuntimeToolExecutionKind = "builtin" | "mod" | "external";
 
 export interface RuntimeToolExecutionRequest {
@@ -94,6 +103,8 @@ export interface RuntimeContextSnapshot {
   toolContextId?: string | null;
   permissionMode?: RuntimePermissionMode;
   workspaceSandbox?: RuntimeWorkspaceSandbox;
+  /** Optional exact model route owned by a higher-level product policy. */
+  modelRoute?: RuntimeModelRoute;
   /** Optional higher-level policy boundary invoked immediately before tools run. */
   toolExecutionControl?: RuntimeToolExecutionControl;
   executionSettings?: RuntimeExecutionSettings;

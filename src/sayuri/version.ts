@@ -1,5 +1,5 @@
 import { SAYURI_MODULE_VERSIONS } from "./module-versions";
 
-export const SAYURI_PROJECT_VERSION = "0.1.62";
+export const SAYURI_PROJECT_VERSION = "0.1.63";
 export const SAYURI_COGNITIVE_CORE_VERSION =
   SAYURI_MODULE_VERSIONS.cognitiveCore;

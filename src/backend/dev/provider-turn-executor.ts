@@ -24,6 +24,10 @@ import {
   markLocalStateChunkOnly,
   type ProviderStreamPart,
 } from "@/backend/local/local-stream-chunks";
+import {
+  getRuntimeContext,
+  type RuntimeModelRoute,
+} from "@/runtime-context";
 import type {
   HeadlessTurnBody,
   HeadlessTurnExecutor,
@@ -45,6 +49,7 @@ export interface ProviderTurnInput {
   uiMessages: LocalMessage[];
   clientTools: unknown[];
   clientSkills: unknown[];
+  modelRoute?: RuntimeModelRoute;
 }
 
 /** Provider-request start info emitted at the model-call boundary. */
@@ -140,6 +145,9 @@ export function buildProviderTurnInput(
     uiMessages: input.uiMessages,
     clientTools: bodyListField(input.body, "client_tools"),
     clientSkills: bodyListField(input.body, "client_skills"),
+    ...(getRuntimeContext()?.modelRoute
+      ? { modelRoute: getRuntimeContext()?.modelRoute }
+      : {}),
   };
 }
 

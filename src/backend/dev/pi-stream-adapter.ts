@@ -532,6 +532,29 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
     } as never);
   }
 
+function exactModelSelectionForTurn(input: ProviderTurnInput): {
+  model: string;
+  modelSettings: Record<string, unknown>;
+} {
+  const route = input.modelRoute;
+  if (!route) {
+    return {
+      model: input.agent.model,
+      modelSettings: input.agent.model_settings,
+    };
+  }
+  if (route.exact !== true || !route.modelHandle.trim()) {
+    throw new Error("Runtime model route must name one exact model.");
+  }
+  return {
+    model: route.modelHandle,
+    modelSettings: {
+      ...input.agent.model_settings,
+      provider_type: route.providerType,
+    },
+  };
+}
+
   private async compactBeforeProviderCall(
     input: ProviderTurnInput,
   ): Promise<LocalCompactionResult | null> {
@@ -543,9 +566,10 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
     // Resolve through the same per-backend Models runtime as streamOnce. The
     // provider-published Model remains the source of truth for contextWindow;
     // Letta owns only the harness policy deciding when to compact around it.
+    const selection = exactModelSelectionForTurn(input);
     const localModel = await resolveAvailableLocalModelForTurn({
-      model: input.agent.model,
-      modelSettings: input.agent.model_settings,
+      model: selection.model,
+      modelSettings: selection.modelSettings,
       storageDir: this.localProviderAuthStorageDir,
       modelsRuntime: this.modelsRuntime,
     });
@@ -575,9 +599,10 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
     input: ProviderTurnInput,
   ): AsyncIterable<ProviderStreamEvent> {
     const tools = toPiTools(input.clientTools);
+    const selection = exactModelSelectionForTurn(input);
     const localModel = await resolveAvailableLocalModelForTurn({
-      model: input.agent.model,
-      modelSettings: input.agent.model_settings,
+      model: selection.model,
+      modelSettings: selection.modelSettings,
       storageDir: this.localProviderAuthStorageDir,
       modelsRuntime: this.modelsRuntime,
     });
@@ -605,8 +630,8 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
       ...(tools ? { tools } : {}),
     };
     const reasoning = reasoningForSettings(
-      input.agent.model_settings,
-      input.agent.model,
+      selection.modelSettings,
+      selection.model,
       resolved.model,
     );
     const headers = resolvePiRequestHeaders({
@@ -680,7 +705,7 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
       await this.onLlmEnd?.({
         agentId: input.agentId,
         conversationId: input.conversationId,
-        model: input.agent.model,
+        model: selection.model,
         durationMs: Date.now() - llmStartedAt,
         ...info,
       });
@@ -689,7 +714,7 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
       await this.onLlmStart?.({
         agentId: input.agentId,
         conversationId: input.conversationId,
-        model: input.agent.model,
+        model: selection.model,
         messageCount: context.messages.length,
         contextWindow: resolved.model.contextWindow,
       });

@@ -14,7 +14,11 @@ import { ACTING_USER_ID_ENV, ACTING_USER_ID_HEADER } from "@/agent/acting-user";
 import type { SkillSource } from "@/agent/skill-sources";
 import { type Backend, getBackend } from "@/backend";
 import { takePendingDiskSpaceReminder } from "@/reminders/disk-space";
-import { getRuntimeContext, type RuntimeContextSnapshot } from "@/runtime-context";
+import {
+  getRuntimeContext,
+  runWithRuntimeContext,
+  type RuntimeContextSnapshot,
+} from "@/runtime-context";
 import { trackBoundaryError } from "@/telemetry/error-reporting";
 import {
   type ClientTool,
@@ -598,18 +602,22 @@ export async function sendMessageStreamWithBackend(
   let cloudApiShutdownRetries = 0;
   while (true) {
     try {
-      stream = await backend.createConversationMessageStream(
-        resolvedConversationId,
-        requestBody,
-        {
-          ...requestOptions,
-          ...(abortRelay ? { signal: abortRelay.signal } : {}),
-          headers: {
-            ...((requestOptions.headers as Record<string, string>) ?? {}),
-            ...extraHeaders,
+      const invokeBackend = () =>
+        backend.createConversationMessageStream(
+          resolvedConversationId,
+          requestBody,
+          {
+            ...requestOptions,
+            ...(abortRelay ? { signal: abortRelay.signal } : {}),
+            headers: {
+              ...((requestOptions.headers as Record<string, string>) ?? {}),
+              ...extraHeaders,
+            },
           },
-        },
-      );
+        );
+      stream = executionRuntimeContext
+        ? await runWithRuntimeContext(executionRuntimeContext, invokeBackend)
+        : await invokeBackend();
       // A rejected request must not consume the notification; retries need it.
       sentClientSkills.set(skillScope, clientSkills);
       stream = attachResponseStateTracking(stream, {

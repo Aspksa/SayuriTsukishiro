@@ -1,6 +1,7 @@
 import type { SendMessageStreamOptions } from "@/agent/message";
 import type { RuntimeContextSnapshot } from "@/runtime-context";
 import type { SayuriExecutionController } from "./execution-control";
+import { buildSayuriRuntimeModelRoute } from "./model-runtime";
 import { resolveSayuriWorkspaceSandbox } from "./workspace-sandbox";
 
 /**
@@ -18,6 +19,7 @@ export function buildSayuriTurnRuntimeContext(input: {
   );
   return {
     toolExecutionControl: input.controller.runtimeControl,
+    modelRoute: buildSayuriRuntimeModelRoute(),
     permissionMode: "standard",
     workingDirectory: input.controller.scopeRoot,
     conversationId: input.conversationId,

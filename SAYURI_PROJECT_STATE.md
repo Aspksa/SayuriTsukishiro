@@ -1,24 +1,46 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.62  
-**Cognitive Core:** 0.6.0
+**Sayuri version:** 0.1.63  
+**Cognitive Core:** 0.7.0
 
-## Closed stage: Default-on Workspace Sandbox
+## Closed stage: Exact Cloud.ru Model Route
 
-Sayuri now requests the imported runtime workspace sandbox whenever the host has
-a supported kernel backend. The project directory becomes the writable root and
-its parent becomes the isolation tree.
+Sayuri now owns an exact model route above the imported provider catalog.
 
-If no supported backend exists, Sayuri does not silently grant shell authority:
-system-mutation approval bridging remains denied. The imported runtime currently
-supports Seatbelt on macOS and bubblewrap on Linux; Windows has no kernel
-backend in this codebase yet.
+The public policy remains **Cloud.ru → DeepSeek-V4-Flash**. At the lower runtime
+boundary Cloud.ru is represented by the existing OpenAI-compatible provider and
+the exact handle `openai-compatible/DeepSeek-V4-Flash`.
 
-A Bash/exec_command/write_stdin approval is accepted only when the live turn
-carries a workspace sandbox whose root matches the Sayuri execution scope.
-Tool-call approval remains plan-bound, exact-argument-bound, and one-shot.
+```
+Sayuri Model Gateway
+      ↓
+Cloud.ru credentials + Base URL
+      ↓
+local provider auth store
+      ↓
+RuntimeModelRoute (exact)
+      ↓
+ProviderTurnInput snapshot
+      ↓
+Pi model resolution
+      ↓
+DeepSeek-V4-Flash only
+```
+
+The turn captures the model route before provider streaming starts, so async
+stream iteration cannot lose the routing policy. Exact OpenAI-compatible model
+resolution supplies no fallback model ID. If Cloud.ru does not publish
+`DeepSeek-V4-Flash` at the configured endpoint, verification fails closed.
+
+API keys are persisted only through the existing local provider credential
+store. Sayuri descriptors expose a masked key and project-state files contain no
+secret.
+
+The upstream multi-provider catalog remains present for compatibility, but it is
+not the authority for Sayuri-controlled turns.
 
 ## NEXT_ACTION
 
-**Route Cloud.ru DeepSeek-V4-Flash through the Sayuri Model Gateway at the
-primary model-resolution boundary, with no provider/model fallback.**
+**Create a primary Sayuri session bootstrap that configures/verifies Cloud.ru,
+creates or resumes durable task state, binds the execution controller, and
+starts each turn through `withSayuriTurnOptions`.**

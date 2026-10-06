@@ -1,13 +1,15 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.62",
-  "milestone": "Default-on Workspace Sandbox",
+  "version": "0.1.63",
+  "milestone": "Exact Cloud.ru Model Route",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
+    "runtime_provider_type": "openai-compatible",
+    "runtime_model_handle": "openai-compatible/DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "workspace-sandbox-hardened",
-  "next_action": "Route Cloud.ru DeepSeek-V4-Flash through the Sayuri Model Gateway at the primary model-resolution boundary, with no provider/model fallback."
+  "current_stage": "exact-model-route-integrated",
+  "next_action": "Create a primary Sayuri session bootstrap that configures/verifies Cloud.ru, creates or resumes durable task state, binds the execution controller, and starts each turn through withSayuriTurnOptions."
 }
