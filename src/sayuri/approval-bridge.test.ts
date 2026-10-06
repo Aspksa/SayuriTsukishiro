@@ -60,6 +60,7 @@ describe("Sayuri approval bridge", () => {
           {
             id: "write-step",
             title: "Write approved file",
+            toolName: "Write",
             status: "in-progress",
             risk: "project-mutation",
             requiresEvidence: true,
@@ -120,7 +121,7 @@ describe("Sayuri approval bridge", () => {
     }
   });
 
-  test("does not auto-bridge shell authority before sandbox hardening", async () => {
+  test("requires an active workspace sandbox for shell approval bridging", async () => {
     const controller = createSayuriExecutionController({
       task: runningTask(),
       scopeRoot: workDir,
@@ -133,6 +134,7 @@ describe("Sayuri approval bridge", () => {
           {
             id: "shell-step",
             title: "Run shell",
+            toolName: "Bash",
             status: "in-progress",
             risk: "system-mutation",
             requiresEvidence: true,
@@ -176,7 +178,7 @@ describe("Sayuri approval bridge", () => {
         result && "tool_return" in result
           ? String(result.tool_return)
           : "",
-      ).toContain("limited to scoped project mutations");
+      ).toContain("requires an active Sayuri workspace sandbox");
     } finally {
       releaseToolExecutionContext(prepared.contextId);
     }

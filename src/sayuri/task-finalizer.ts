@@ -72,9 +72,8 @@ export async function finalizeSayuriSessionTask(input: {
   continueWork?: boolean;
   now?: string;
 }): Promise<SayuriTaskFinalizationResult> {
-  const completedTask = await input.session.controller.completeTaskIfReady(
-    input.now,
-  );
+  const now = input.now ?? new Date().toISOString();
+  const completedTask = await input.session.controller.completeTaskIfReady(now);
   const taskId = completedTask.id;
 
   const registryEntry = await input.session.taskRegistry.getTask(
@@ -114,13 +113,13 @@ export async function finalizeSayuriSessionTask(input: {
         goalStore,
         taskRegistry: input.session.taskRegistry,
         evidenceStore: goalEvidenceStore,
-        now: input.now,
+        now,
       });
       goalState = "completed";
     } else if (onlyCriterionReasons(evaluation.reasons)) {
       if (goal.status === "active") {
         const blocked = transitionSayuriGoal(goal, "blocked", {
-          now: input.now,
+          now,
           blockedReason: `Awaiting success-criteria evidence: ${evaluation.reasons.join(" ")}`,
         });
         await goalStore.saveGoal(blocked);

@@ -15,6 +15,7 @@ export * from "./planner-runtime";
 export * from "./result-verifier";
 export * from "./session";
 export * from "./state-store";
+export * from "./step-execution-policy";
 export * from "./turn-context";
 export * from "./workspace-sandbox";
 export * from "./work-orchestrator";

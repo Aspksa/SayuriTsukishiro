@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.76",
-  "milestone": "Cognitive Loop Supervisor",
+  "version": "0.1.77",
+  "milestone": "Plan Step Intent & Retry Enforcement",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "cognitive-loop-supervisor",
-  "next_action": "Add deterministic Plan Step Intent Enforcement: bind read-only execution to the exact active planner tool family/intent, deny unrelated reads from advancing the plan, and introduce a controlled step retry/failure policy with receipts before subagents/background execution."
+  "current_stage": "plan-step-intent-and-retries",
+  "next_action": "Add subagent capability leases: each child agent is bound to one parent task/plan step, receives only an explicit read-only or narrowly approved tool set, cannot mutate parent lifecycle/goal state, and must return evidence receipts to the parent verifier."
 }

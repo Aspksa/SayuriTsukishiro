@@ -145,6 +145,7 @@ describe("Sayuri durable brain state", () => {
           {
             id: "write-step",
             title: "Write only with live approval",
+            toolName: "Write",
             status: "in-progress",
             risk: "project-mutation",
             requiresEvidence: true,

@@ -186,7 +186,7 @@ export async function recoverLatestSayuriSessionForProject(input: {
     if (disposition === "needs-lifecycle-advance") {
       const advanced = advanceSayuriTaskForExecution(
         snapshot.task,
-        input.now,
+        input.now ?? new Date().toISOString(),
       );
       await store.saveSnapshot(advanced, snapshot.plan);
     }
@@ -233,7 +233,7 @@ export async function releaseWaitingSayuriTask(input: {
   const nextTask = resumeWaitingSayuriTask(
     snapshot.task,
     input.trigger,
-    input.now,
+    input.now ?? new Date().toISOString(),
   );
   const store = await indexedStore({
     inner,

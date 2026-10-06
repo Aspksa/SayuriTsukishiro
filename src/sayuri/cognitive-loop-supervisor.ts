@@ -87,8 +87,10 @@ export async function superviseSayuriSession(input: {
       result: await finalizeSayuriSessionTask({
         session: input.session,
         modelGateway: input.modelGateway,
-        goalStore: input.goalStore,
-        goalEvidenceStore: input.goalEvidenceStore,
+        ...(input.goalStore ? { goalStore: input.goalStore } : {}),
+        ...(input.goalEvidenceStore
+          ? { goalEvidenceStore: input.goalEvidenceStore }
+          : {}),
         ...(input.modelsRuntime ? { modelsRuntime: input.modelsRuntime } : {}),
         ...(input.now ? { now: input.now } : {}),
       }),
@@ -97,7 +99,10 @@ export async function superviseSayuriSession(input: {
 
   const step = activePlanStep(input.session);
   if (task.status === "checkpointed" && step) {
-    await input.session.controller.transitionTask("running", input.now);
+    await input.session.controller.transitionTask(
+      "running",
+      input.now ?? new Date().toISOString(),
+    );
     return {
       kind: "continue",
       session: input.session,

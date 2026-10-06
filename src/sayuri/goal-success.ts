@@ -183,17 +183,25 @@ export async function evaluateSayuriGoalSuccess(input: {
     reasons.push("Goal has no linked tasks.");
   }
 
+  let completedTaskCount = 0;
   for (const taskId of input.goal.taskIds) {
     const task = await input.taskRegistry.getTask(input.goal.projectId, taskId);
     if (!task) {
       reasons.push(`Linked task "${taskId}" is missing from the project registry.`);
       continue;
     }
-    if (task.status !== "completed") {
+    if (task.status === "completed") {
+      completedTaskCount += 1;
+      continue;
+    }
+    if (task.status !== "failed" && task.status !== "cancelled") {
       reasons.push(
-        `Linked task "${taskId}" is "${task.status}", not completed.`,
+        `Linked task "${taskId}" is unfinished in status "${task.status}".`,
       );
     }
+  }
+  if (input.goal.taskIds.length > 0 && completedTaskCount === 0) {
+    reasons.push("Goal has no successfully completed linked task.");
   }
 
   const evidence = await input.evidenceStore.listForGoal(
@@ -243,9 +251,11 @@ export async function completeSayuriGoalIfVerified(input: {
     );
   }
 
-  const completed = transitionSayuriGoal(goal, "completed", {
-    now: input.now,
-  });
+  const completed = transitionSayuriGoal(
+    goal,
+    "completed",
+    input.now ? { now: input.now } : {},
+  );
   await input.goalStore.saveGoal(completed);
   return completed;
 }

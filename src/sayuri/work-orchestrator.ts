@@ -81,6 +81,7 @@ export async function orchestrateSayuriProjectWork(
   const stateStore = input.stateStore ?? new FileSayuriBrainStateStore();
   const taskRegistry = input.taskRegistry ?? new FileSayuriTaskRegistry();
   const goalStore = input.goalStore ?? new FileSayuriGoalStore();
+  const now = input.now ?? new Date().toISOString();
 
   const recovery = await recoverLatestSayuriSessionForProject({
     projectId: input.projectId,
@@ -128,14 +129,14 @@ export async function orchestrateSayuriProjectWork(
   const linkedGoal = linkTaskToSayuriGoal(
     decision.goal,
     planned.task.id,
-    input.now,
+    now,
   );
   await goalStore.saveGoal(linkedGoal);
 
   const runningTask = transitionSayuriTask(
     planned.task,
     "running",
-    input.now,
+    now,
   );
   await indexedStore.saveSnapshot(runningTask, planned.plan);
 

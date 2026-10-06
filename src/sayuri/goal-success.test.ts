@@ -143,6 +143,47 @@ describe("Sayuri Goal Success Verification", () => {
     expect((await goals.getGoal("project-a", goal.id))?.status).toBe("active");
   });
 
+  test("allows a later completed retry to satisfy a goal after a failed attempt", async () => {
+    const { goals, tasks, evidence } = await stores();
+    let goal = await goals.createGoal({
+      id: "goal-retry",
+      projectId: "project-a",
+      title: "Retry goal",
+      objective: "Eventually complete safely",
+      createdAt: "2026-10-06T11:01:30.000Z",
+    });
+    goal = {
+      ...goal,
+      taskIds: ["task-failed", "task-retry"],
+      updatedAt: "2026-10-06T11:01:31.000Z",
+    };
+    await goals.saveGoal(goal);
+    for (const [taskId, status] of [
+      ["task-failed", "failed"],
+      ["task-retry", "completed"],
+    ] as const) {
+      await tasks.upsertTask({
+        projectId: "project-a",
+        taskId,
+        planId: `plan-${taskId}`,
+        agentId: "sayuri-primary",
+        conversationId: "default",
+        goal: goal.objective,
+        status,
+        revision: 4,
+        updatedAt: "2026-10-06T11:01:32.000Z",
+        checkpointCount: 1,
+      });
+    }
+
+    const evaluation = await evaluateSayuriGoalSuccess({
+      goal,
+      taskRegistry: tasks,
+      evidenceStore: evidence,
+    });
+    expect(evaluation.ready).toBe(true);
+  });
+
   test("a goal with no textual criteria still requires a completed linked task", async () => {
     const { goals, tasks, evidence } = await stores();
     let goal = await goals.createGoal({

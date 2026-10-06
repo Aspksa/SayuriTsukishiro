@@ -53,6 +53,7 @@ describe("Sayuri workspace sandbox policy", () => {
             {
               id: "shell-step",
               title: "Run sandboxed command",
+              toolName: "Bash",
               status: "in-progress",
               risk: "system-mutation",
               requiresEvidence: true,

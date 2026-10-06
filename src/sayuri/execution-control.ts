@@ -21,6 +21,10 @@ import {
 import { type SayuriPlan, validateSayuriPlan } from "./planner";
 import { progressSayuriPlanFromVerifiedStep } from "./plan-progress";
 import {
+  sayuriStepAttemptPolicy,
+  sayuriStepCanBindTool,
+} from "./step-execution-policy";
+import {
   type SayuriVerificationResult,
   verifySayuriResult,
 } from "./result-verifier";
@@ -150,12 +154,6 @@ function fingerprintArgs(args: Readonly<Record<string, unknown>>): string {
   return JSON.stringify(args);
 }
 
-function executablePlanSteps(plan: SayuriPlan) {
-  return plan.steps.filter(
-    (step) => step.status === "in-progress" || step.status === "pending",
-  );
-}
-
 export function classifySayuriToolRisk(toolName: string): SayuriActionRisk {
   if (READ_ONLY_TOOLS.has(toolName)) return "read";
   if (PROJECT_MUTATION_TOOLS.has(toolName)) return "project-mutation";
@@ -262,13 +260,27 @@ export class SayuriExecutionController {
         `Plan step "${authorization.stepId}" does not exist.`,
       );
     }
-    if (step.status === "completed" || step.status === "cancelled") {
+    if (step.status !== "in-progress") {
       throw new Error(
-        `Plan step "${authorization.stepId}" is not executable in status "${step.status}".`,
+        `Plan step "${authorization.stepId}" is not active in status "${step.status}".`,
+      );
+    }
+    if (!step.toolName?.trim()) {
+      throw new Error(
+        `Plan step "${authorization.stepId}" must bind an exact tool before authorization.`,
+      );
+    }
+    if (
+      authorization.toolName !== undefined &&
+      authorization.toolName !== step.toolName
+    ) {
+      throw new Error(
+        `Authorization tool "${authorization.toolName}" does not match planned tool "${step.toolName}".`,
       );
     }
     this.#authorizations.set(authorization.toolCallId, {
       ...authorization,
+      toolName: step.toolName,
     });
   }
 
@@ -277,7 +289,7 @@ export class SayuriExecutionController {
   }
 
   private grantApproval(grant: RuntimeToolApprovalGrant) {
-    if (!["running", "verifying", "checkpointed"].includes(this.#task.status)) {
+    if (!["running", "verifying"].includes(this.#task.status)) {
       return {
         decision: "deny" as const,
         reason: `Task lifecycle status "${this.#task.status}" is not executable.`,
@@ -325,25 +337,17 @@ export class SayuriExecutionController {
       };
     }
 
-    const candidates = executablePlanSteps(this.#plan).filter(
+    const candidates = this.#plan.steps.filter(
       (step) =>
-        RISK_RANK[step.risk] >= RISK_RANK[risk] &&
-        (step.toolName === undefined || step.toolName === grant.toolName),
+        sayuriStepCanBindTool(step, grant.toolName) &&
+        RISK_RANK[step.risk] >= RISK_RANK[risk],
     );
-    const inProgress = candidates.filter(
-      (step) => step.status === "in-progress",
-    );
-    const selected =
-      inProgress.length === 1
-        ? inProgress[0]
-        : inProgress.length === 0 && candidates.length === 1
-          ? candidates[0]
-          : undefined;
+    const selected = candidates.length === 1 ? candidates[0] : undefined;
     if (!selected) {
       return {
         decision: "deny" as const,
         reason:
-          "Human approval could not be mapped unambiguously to one executable plan step.",
+          "Human approval must match exactly one active planned tool step.",
       };
     }
 
@@ -488,7 +492,7 @@ export class SayuriExecutionController {
 
   private async authorize(request: RuntimeToolExecutionRequest) {
     const risk = classifySayuriToolRisk(request.toolName);
-    if (!["running", "verifying", "checkpointed"].includes(this.#task.status)) {
+    if (!["running", "verifying"].includes(this.#task.status)) {
       const executionId = `sayuri-exec-${randomUUID()}`;
       if (request.toolCallId) {
         this.#executionByToolCall.set(request.toolCallId, executionId);
@@ -527,10 +531,8 @@ export class SayuriExecutionController {
       risk === "read"
         ? this.#plan.steps.find(
             (candidate) =>
-              candidate.status === "in-progress" &&
               candidate.risk === "read" &&
-              (candidate.toolName === undefined ||
-                candidate.toolName === request.toolName),
+              sayuriStepCanBindTool(candidate, request.toolName),
           )
         : undefined;
     const step = authorizedStep ?? implicitReadStep;
@@ -539,8 +541,7 @@ export class SayuriExecutionController {
       (risk === "read" || authorization?.scopeApproved === true);
     const stepCoversRisk =
       step !== undefined && RISK_RANK[step.risk] >= RISK_RANK[risk];
-    const stepToolMatches =
-      step?.toolName === undefined || step.toolName === request.toolName;
+    const stepToolMatches = step?.toolName === request.toolName;
     const approvedToolMatches =
       authorization?.toolName === undefined ||
       authorization.toolName === request.toolName;
@@ -644,6 +645,35 @@ export class SayuriExecutionController {
           : {}),
       },
     });
+
+    if (outcome.status === "error" && metadata?.stepId) {
+      const step = this.#plan.steps.find(
+        (candidate) => candidate.id === metadata.stepId,
+      );
+      if (step) {
+        const errors = this.#ledger
+          .snapshot()
+          .filter(
+            (receipt) =>
+              receipt.taskId === this.#task.id &&
+              receipt.stepId === step.id &&
+              receipt.outcome === "error",
+          ).length;
+        const policy = sayuriStepAttemptPolicy(step);
+        if (
+          errors >= policy.maxErrors &&
+          (this.#task.status === "running" ||
+            this.#task.status === "verifying")
+        ) {
+          this.#task = transitionSayuriTask(
+            this.#task,
+            "failed",
+            new Date().toISOString(),
+          );
+          await this.persistState();
+        }
+      }
+    }
   }
 }
 

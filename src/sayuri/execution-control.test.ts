@@ -141,6 +141,7 @@ describe("Sayuri real tool execution control", () => {
           {
             id: "write-step",
             title: "Write project file",
+            toolName: "Write",
             status: "in-progress",
             risk: "project-mutation",
             requiresEvidence: true,

@@ -1,38 +1,35 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.76  
-**Cognitive Core:** 0.19.0
+**Sayuri version:** 0.1.77  
+**Cognitive Core:** 0.20.0
 
-## Closed stage: Cognitive Loop Supervisor
+## Closed stage: Plan Step Intent & Retry Enforcement
 
-Sayuri now has a deterministic project-level loop supervisor.
+Tool execution can no longer advance a plan merely because the tool is broadly
+read-only or because a matching mutation exists somewhere later in the plan.
 
-The supervisor enforces one unfinished project task at a time. Multiple
-unfinished tasks are reported as a conflict instead of being silently ranked or
-chosen by the model. The same invariant is enforced in restart recovery.
+An execution receipt is bound to a plan step only when the step is currently
+`in-progress` and names the exact tool being executed. Unrelated reads remain
+available as harmless exploratory actions inside scope, but they are unbound and
+cannot checkpoint or complete planned work.
 
-For an active session:
+Human approval bridging is now restricted to exactly one active planned tool
+step. Pending/future mutation steps cannot consume an approval early, and every
+mutating retry needs a fresh one-shot approval.
 
-- a verified checkpoint with an unlocked in-progress plan step moves
-  `checkpointed -> running`;
-- a terminal plan enters the Task Finalizer / Completion Gate path;
-- a plan with no executable step is reported as blocked instead of inventing a
-  lifecycle transition;
-- restart recovery re-enters the same decision path through durable task state.
+Step failures also have deterministic retry budgets by risk. Repeated direct
+errors eventually transition the task to `failed`, persist that state, and
+block further execution. A later task for the same long-term goal may succeed:
+historical failed/cancelled task attempts no longer permanently prevent goal
+success, provided at least one linked task completes successfully.
 
-This closes the first deterministic loop:
-
-```
-goal → planner → durable task → controlled tool
- → receipt → verifier → checkpoint → plan progression
- → continue OR completion gate → goal success → next work
-```
-
-The LLM proposes structure and content; lifecycle transitions remain code-owned.
+Strict optional-time propagation in recovery/orchestration/finalization was also
+normalized so callers never pass an implicit undefined timestamp into lifecycle
+transitions.
 
 ## NEXT_ACTION
 
-**Add deterministic Plan Step Intent Enforcement: bind read-only execution to
-the exact active planner tool family/intent, deny unrelated reads from
-advancing the plan, and introduce a controlled step retry/failure policy with
-receipts before subagents/background execution.**
+**Add subagent capability leases: each child agent is bound to one parent
+task/plan step, receives only an explicit read-only or narrowly approved tool
+set, cannot mutate parent lifecycle/goal state, and must return evidence
+receipts to the parent verifier.**
