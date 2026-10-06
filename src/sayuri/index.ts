@@ -1,6 +1,7 @@
 export * from "./action-broker";
 export * from "./evidence-ledger";
 export * from "./execution-control";
+export * from "./goal-manager";
 export * from "./model-gateway";
 export * from "./model-runtime";
 export * from "./module-versions";

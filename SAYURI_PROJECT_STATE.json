@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.66",
-  "milestone": "Unfinished Task Recovery",
+  "version": "0.1.67",
+  "milestone": "Project Goal Manager",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "unfinished-task-recovery",
-  "next_action": "Add a project Goal Manager that persists long-term goals, links goals to task IDs, chooses the next eligible goal without LLM authority, and creates planner input for a new task only when no unfinished task should resume."
+  "current_stage": "project-goal-manager",
+  "next_action": "Build Planner v1 around a strict proposal envelope: DeepSeek-V4-Flash may propose ordered steps for a planner seed, but deterministic validation assigns risk/evidence requirements and the LLM never receives execution authority."
 }

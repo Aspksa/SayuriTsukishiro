@@ -1,8 +1,9 @@
 export const SAYURI_MODULE_VERSIONS = {
-  cognitiveCore: "0.10.0",
+  cognitiveCore: "0.11.0",
   modelGateway: "0.2.0",
   modelRuntime: "0.2.0",
   primarySession: "0.3.0",
+  goalManager: "0.1.0",
   taskRegistry: "0.2.0",
   taskRecovery: "0.1.0",
   actionBroker: "0.4.0",

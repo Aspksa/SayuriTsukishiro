@@ -1,29 +1,35 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.66  
-**Cognitive Core:** 0.10.0
+**Sayuri version:** 0.1.67  
+**Cognitive Core:** 0.11.0
 
-## Closed stage: Unfinished Task Recovery
+## Closed stage: Project Goal Manager
 
-Sayuri can now recover work by **project**, without already knowing the task ID.
+Sayuri now distinguishes long-term project goals from executable tasks.
 
-Recovery inspects the durable project registry and the underlying task snapshot.
-It repairs stale terminal index entries, advances only safe pre-execution states
-through explicit lifecycle transitions, and resumes a primary session for the
-first real unfinished task.
+Goals are durable, project-scoped, priority ordered, dependency aware, and link
+to the task IDs created to pursue them. Goal selection is deterministic:
+paused, blocked, terminal, or dependency-incomplete goals cannot be selected.
 
-Waiting states are intentionally different:
+The work selector follows a stronger rule:
 
-- `waiting-user` is surfaced and remains paused until a
-  `user-confirmed` trigger is supplied.
-- `waiting-external` remains paused until an `external-ready` trigger is
-  supplied.
-- a controller in either waiting state denies even read-only tool execution.
+```
+unfinished task exists?
+  yes → resume it
+  no  → choose next eligible active goal
+           ↓
+       create Planner seed
+```
 
-This prevents "restart" from silently becoming permission to continue work.
+This prevents a model from abandoning unfinished work simply because another
+goal looks more attractive. The LLM does not choose project priority or
+dependency satisfaction.
+
+A planner seed carries only task/project/goal identity, objective, constraints,
+and success criteria. It is not an execution plan and grants no permissions.
 
 ## NEXT_ACTION
 
-**Add a project Goal Manager that persists long-term goals, links goals to task
-IDs, chooses the next eligible goal without LLM authority, and creates planner
-input for a new task only when no unfinished task should resume.**
+**Build Planner v1 around a strict proposal envelope: DeepSeek-V4-Flash may
+propose ordered steps for a planner seed, but deterministic validation assigns
+risk/evidence requirements and the LLM never receives execution authority.**
