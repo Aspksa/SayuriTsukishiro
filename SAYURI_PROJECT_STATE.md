@@ -1,43 +1,29 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.70  
-**Cognitive Core:** 0.14.0
+**Sayuri version:** 0.1.71  
+**Cognitive Core:** 0.15.0
 
-## Closed stage: Project Work Orchestrator
+## Closed stage: Deterministic Plan Progression
 
-Sayuri now has one deterministic entry point for project work.
+Verified tool execution now advances the plan in code rather than by model
+assertion.
 
-The orchestrator first attempts durable unfinished-task recovery. Only when no
-unfinished task exists does it select the next eligible long-term goal and call
-Planner Runtime.
+A checkpoint must resolve to exactly one bound plan step. That step must be
+`in-progress`. Mutation steps must carry verified receipt IDs. The step is
+marked `completed`, receipts are attached, and only the first pending step
+whose dependencies are already completed becomes `in-progress`.
 
-For new work the order is intentionally strict:
+Planner-generated read steps are now bound to their matching in-progress Read
+tool call, so read evidence can advance a real plan without mutation approval.
+Unbound reads may still execute under the read-only policy, but they cannot be
+used to checkpoint/complete a planned step.
 
-```
-eligible goal
-  ↓
-Planner Runtime → strict JSON → deterministic compiled plan
-  ↓
-persist task as ready
-  ↓
-link task ID to long-term goal
-  ↓
-explicit ready → running transition
-  ↓
-persist again
-  ↓
-bootstrap primary execution controller
-```
-
-If a failure occurs after planning, the ready/running task is already durable
-and project-indexed, so restart recovery continues the same task instead of
-creating duplicate work.
-
-Planner Runtime is never invoked when unfinished work exists.
+The checkpoint next action is taken from the newly unlocked plan step when one
+exists. The model cannot directly set plan step status to completed.
 
 ## NEXT_ACTION
 
-**Add deterministic Plan Progression: a verified tool result must complete
-exactly its bound in-progress step, attach receipt IDs, unlock only
-dependency-satisfied next steps, persist the updated plan/task, and never let
-the LLM mark work complete.**
+**Add the Completion Gate: only when every plan step is completed/cancelled and
+all evidence-bearing steps have verified receipts may the task transition
+`checkpointed -> verifying -> completed` and the linked long-term goal be
+evaluated for completion.**

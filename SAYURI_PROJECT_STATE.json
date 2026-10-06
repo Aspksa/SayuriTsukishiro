@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.70",
-  "milestone": "Project Work Orchestrator",
+  "version": "0.1.71",
+  "milestone": "Deterministic Plan Progression",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "project-work-orchestrator",
-  "next_action": "Add deterministic Plan Progression: a verified tool result must complete exactly its bound in-progress step, attach receipt IDs, unlock only dependency-satisfied next steps, persist the updated plan/task, and never let the LLM mark work complete."
+  "current_stage": "deterministic-plan-progression",
+  "next_action": "Add the Completion Gate: only when every plan step is completed/cancelled and all evidence-bearing steps have verified receipts may the task transition checkpointed->verifying->completed and the linked long-term goal be evaluated for completion."
 }

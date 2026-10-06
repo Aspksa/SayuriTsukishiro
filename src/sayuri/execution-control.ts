@@ -18,6 +18,7 @@ import {
   type SayuriEvidenceTrust,
 } from "./evidence-ledger";
 import { type SayuriPlan, validateSayuriPlan } from "./planner";
+import { progressSayuriPlanFromVerifiedStep } from "./plan-progress";
 import {
   type SayuriVerificationResult,
   verifySayuriResult,
@@ -164,7 +165,7 @@ export function classifySayuriToolRisk(toolName: string): SayuriActionRisk {
 
 export class SayuriExecutionController {
   readonly #scopeRoot: string;
-  readonly #plan: SayuriPlan;
+  #plan: SayuriPlan;
   readonly #ledger: SayuriEvidenceLedger;
   readonly #stateStore?: SayuriBrainStateStore;
   readonly #authorizations = new Map<
@@ -401,11 +402,34 @@ export class SayuriExecutionController {
         `Cannot checkpoint unverified execution: ${verification.reason}`,
       );
     }
+    const stepIds = [
+      ...new Set(
+        verification.receipts
+          .map((receipt) => receipt.stepId)
+          .filter((stepId): stepId is string => Boolean(stepId)),
+      ),
+    ];
+    if (stepIds.length !== 1) {
+      throw new Error(
+        "Verified tool call must be bound to exactly one Sayuri plan step.",
+      );
+    }
+    const progression = progressSayuriPlanFromVerifiedStep({
+      plan: this.#plan,
+      stepId: stepIds[0]!,
+      receiptIds: verification.receipts.map((receipt) => receipt.id),
+    });
+    this.#plan = progression.plan;
     this.#task = checkpointSayuriTask(this.#task, {
       id: `checkpoint-${randomUUID()}`,
       createdAt: input.createdAt ?? new Date().toISOString(),
       summary: input.summary,
-      nextAction: input.nextAction,
+      nextAction:
+        progression.nextStep?.intent ??
+        progression.nextStep?.title ??
+        (progression.planComplete
+          ? "Verify overall task completion."
+          : input.nextAction),
       verifiedReceiptIds: verification.receipts.map((receipt) => receipt.id),
     });
     await this.persistState();
@@ -470,11 +494,22 @@ export class SayuriExecutionController {
     const authorization = request.toolCallId
       ? this.#authorizations.get(request.toolCallId)
       : undefined;
-    const step = authorization
+    const authorizedStep = authorization
       ? this.#plan.steps.find(
           (candidate) => candidate.id === authorization.stepId,
         )
       : undefined;
+    const implicitReadStep =
+      risk === "read"
+        ? this.#plan.steps.find(
+            (candidate) =>
+              candidate.status === "in-progress" &&
+              candidate.risk === "read" &&
+              (candidate.toolName === undefined ||
+                candidate.toolName === request.toolName),
+          )
+        : undefined;
+    const step = authorizedStep ?? implicitReadStep;
     const scopeApproved =
       requestInsideScope(request, this.#scopeRoot) &&
       (risk === "read" || authorization?.scopeApproved === true);
@@ -511,7 +546,7 @@ export class SayuriExecutionController {
       this.#executionByToolCall.set(request.toolCallId, executionId);
     }
     this.#metadataByExecution.set(executionId, {
-      stepId: authorization?.stepId,
+      stepId: step?.id,
       toolCallId: request.toolCallId,
     });
 
@@ -520,7 +555,7 @@ export class SayuriExecutionController {
         id: `receipt-${randomUUID()}`,
         executionId,
         taskId: this.#task.id,
-        stepId: authorization?.stepId,
+        stepId: step?.id,
         kind: "tool-result",
         trust: "direct",
         outcome: "denied",
