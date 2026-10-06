@@ -1,27 +1,29 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.65  
-**Cognitive Core:** 0.9.0
+**Sayuri version:** 0.1.66  
+**Cognitive Core:** 0.10.0
 
-## Closed stage: Project Task Registry
+## Closed stage: Unfinished Task Recovery
 
-Durable task state is now indexed by project instead of being discoverable only
-when a caller already knows the task ID.
+Sayuri can now recover work by **project**, without already knowing the task ID.
 
-Each registry entry records project, task, plan, agent, conversation, goal,
-lifecycle status, revision, checkpoint count, latest checkpoint, and next
-action. Terminal tasks remain in history; unfinished-task lookup excludes
-completed, failed, and cancelled work.
+Recovery inspects the durable project registry and the underlying task snapshot.
+It repairs stale terminal index entries, advances only safe pre-execution states
+through explicit lifecycle transitions, and resumes a primary session for the
+first real unfinished task.
 
-The primary session wraps its durable state store with the project index. Every
-saved task/checkpoint therefore refreshes the project registry, and a resumed
-session re-publishes its current durable state to repair a missing/stale index.
+Waiting states are intentionally different:
 
-Registry files use encoded project IDs, atomic replacement, and cross-process
-locks.
+- `waiting-user` is surfaced and remains paused until a
+  `user-confirmed` trigger is supplied.
+- `waiting-external` remains paused until an `external-ready` trigger is
+  supplied.
+- a controller in either waiting state denies even read-only tool execution.
+
+This prevents "restart" from silently becoming permission to continue work.
 
 ## NEXT_ACTION
 
-**Add automatic unfinished-task recovery that selects the latest recoverable
-task for a project, distinguishes waiting-user/waiting-external from executable
-tasks, and resumes only through explicit lifecycle transitions.**
+**Add a project Goal Manager that persists long-term goals, links goals to task
+IDs, chooses the next eligible goal without LLM authority, and creates planner
+input for a new task only when no unfinished task should resume.**

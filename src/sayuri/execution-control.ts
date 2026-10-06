@@ -26,6 +26,8 @@ import type { SayuriBrainStateStore } from "./state-store";
 import {
   checkpointSayuriTask,
   type SayuriTaskState,
+  type SayuriTaskStatus,
+  transitionSayuriTask,
 } from "./task-lifecycle";
 import { resolveSayuriWorkspaceSandbox } from "./workspace-sandbox";
 
@@ -273,6 +275,12 @@ export class SayuriExecutionController {
   }
 
   private grantApproval(grant: RuntimeToolApprovalGrant) {
+    if (!["running", "verifying", "checkpointed"].includes(this.#task.status)) {
+      return {
+        decision: "deny" as const,
+        reason: `Task lifecycle status "${this.#task.status}" is not executable.`,
+      };
+    }
     if (this.#consumedApprovalToolCallIds.has(grant.toolCallId)) {
       return {
         decision: "deny" as const,
@@ -402,6 +410,15 @@ export class SayuriExecutionController {
     return this.task;
   }
 
+  async transitionTask(
+    nextStatus: SayuriTaskStatus,
+    now: string = new Date().toISOString(),
+  ): Promise<SayuriTaskState> {
+    this.#task = transitionSayuriTask(this.#task, nextStatus, now);
+    await this.persistState();
+    return this.task;
+  }
+
   async persistState(): Promise<void> {
     await this.#stateStore?.saveSnapshot(this.#task, this.#plan);
   }
@@ -421,6 +438,33 @@ export class SayuriExecutionController {
 
   private async authorize(request: RuntimeToolExecutionRequest) {
     const risk = classifySayuriToolRisk(request.toolName);
+    if (!["running", "verifying", "checkpointed"].includes(this.#task.status)) {
+      const executionId = `sayuri-exec-${randomUUID()}`;
+      if (request.toolCallId) {
+        this.#executionByToolCall.set(request.toolCallId, executionId);
+      }
+      await this.appendReceipt({
+        id: `receipt-${randomUUID()}`,
+        executionId,
+        taskId: this.#task.id,
+        kind: "tool-result",
+        trust: "direct",
+        outcome: "denied",
+        source: "sayuri-task-lifecycle",
+        summary: `Task lifecycle status "${this.#task.status}" is not executable.`,
+        createdAt: new Date().toISOString(),
+        metadata: {
+          tool: request.toolName,
+          risk,
+          ...(request.toolCallId ? { toolCallId: request.toolCallId } : {}),
+        },
+      });
+      return {
+        decision: "deny" as const,
+        executionId,
+        reason: `Task lifecycle status "${this.#task.status}" is not executable.`,
+      };
+    }
     const authorization = request.toolCallId
       ? this.#authorizations.get(request.toolCallId)
       : undefined;

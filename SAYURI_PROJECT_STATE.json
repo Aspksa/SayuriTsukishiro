@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.65",
-  "milestone": "Project Task Registry",
+  "version": "0.1.66",
+  "milestone": "Unfinished Task Recovery",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "project-task-registry",
-  "next_action": "Add automatic unfinished-task recovery that selects the latest recoverable task for a project, distinguishes waiting-user/waiting-external from executable tasks, and resumes only through explicit lifecycle transitions."
+  "current_stage": "unfinished-task-recovery",
+  "next_action": "Add a project Goal Manager that persists long-term goals, links goals to task IDs, chooses the next eligible goal without LLM authority, and creates planner input for a new task only when no unfinished task should resume."
 }
