@@ -1,66 +1,74 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.58  
-**Cognitive Core:** 0.2.0  
+**Sayuri version:** 0.1.59  
+**Cognitive Core:** 0.3.0  
 **Base runtime:** Letta Code 0.34.4
 
 ## Current architecture
 
-Sayuri remains a higher-level cognitive and policy layer over the imported
-execution runtime. Version 0.1.58 establishes the first real enforcement seam:
-the low-level tool manager can now receive a runtime-scoped execution control
-without importing Sayuri itself.
+Version 0.1.59 adds durable state below the cognitive lifecycle without putting
+mutable execution authority into the LLM.
 
 ```
-Planner
-  ↓
+Goal / Task / Plan
+        ↓
 Sayuri Execution Controller
-  ↓
+        ↓
 Action Broker
-  ↓
-Runtime Tool Execution Control
-  ↓
-built-in / mod / external tool
-  ↓
-Evidence Receipt
-  ↓
+        ↓
+Runtime tool boundary
+        ↓
+Execution receipt
+        ↓
+Evidence Ledger
+        ↓
+Durable Brain State
+        ↓
 Result Verifier
-  ↓
-Task Checkpoint
+        ↓
+Checkpoint / Resume
 ```
 
-This keeps the dependency direction correct: the generic runtime exposes an
-execution-control interface, while `src/sayuri/` supplies the policy.
+## Durable Brain State
 
-## Security changes in 0.1.58
+The file-backed state store persists:
 
-- Default permission mode is now `standard`, not `unrestricted`.
-- Spawned subagents now start in `standard` permission mode.
-- A higher-level execution controller may fail closed immediately before a real
-  tool executes.
-- Sayuri read access is automatically allowed only inside its approved
-  workspace scope.
-- Mutations require an active task, a valid plan step, approved scope, and an
-  explicit approval grant.
-- A plan step cannot authorize an action with a higher risk than the step
-  declared.
-- Unknown tools are treated conservatively as external actions.
+- task lifecycle snapshot;
+- validated plan snapshot;
+- append-only evidence receipts;
+- checkpoint state;
+- execution-to-tool-call evidence correlation.
 
-Existing hard permission checks, workspace/cross-agent guards, hooks, and
-sandboxing remain in place. The Action Broker is an additional boundary rather
-than a replacement for those controls.
+Writes use atomic snapshot replacement and a cross-process lock. Task IDs are
+encoded before becoming path segments, so a model- or user-supplied task ID
+cannot escape the Sayuri state directory.
 
-## Evidence and verification
+The default state root is `~/.sayuri/state`. It can be overridden with
+`SAYURI_STATE_DIR`; callers may also inject an explicit store root.
 
-Every controlled execution receives a harness-generated `executionId`.
-Successful built-in execution produces direct evidence. Mod and external tool
-results are marked reported evidence because returning successfully is not
-always proof that a detached or remote side effect completed.
+## Recovery policy
 
-The Result Verifier refuses to verify a tool call with missing, failed, denied,
-or insufficient-trust evidence. A verified direct tool execution can be turned
-into a Task Lifecycle checkpoint containing the exact receipt IDs that justified
-the checkpoint.
+A restarted Sayuri process can load the task, plan, receipts, restore evidence
+correlation, verify an already completed tool execution, and continue from a
+checkpoint.
+
+**Approval grants are deliberately not persisted.** A mutation that was approved
+before a process restart does not inherit that approval after restart. Sayuri
+must obtain a live approval again before a new mutating tool call.
+
+This separates durable knowledge ("what happened") from ephemeral authority
+("what may happen now").
+
+## Security invariants
+
+- default permission mode: `standard`;
+- subagent permission mode: `standard`;
+- read access is restricted to approved scope;
+- mutation requires task + plan + scope + live approval;
+- Action Broker is additive to existing runtime permission and sandbox guards;
+- missing or corrupt evidence does not become a successful checkpoint;
+- evidence persistence failure is surfaced rather than silently claiming
+  success.
 
 ## Model policy
 
@@ -68,19 +76,18 @@ The only intended external LLM route remains:
 
 - provider: **Cloud.ru**
 - model: **DeepSeek-V4-Flash**
-- automatic model/provider fallback: **disabled**
+- automatic provider/model fallback: **disabled**
 
-The imported provider catalog remains untouched until the Model Gateway is wired
-into the primary turn path.
+The imported provider catalog is still present underneath and is not yet the
+authority for Sayuri.
 
 ## Next stage
 
-1. Persist receipts and task/checkpoint state across restarts.
-2. Connect the primary Sayuri turn lifecycle to
-   `SayuriExecutionController`.
-3. Feed existing approval results into planned tool authorizations.
-4. Route Cloud.ru/DeepSeek-V4-Flash through `ModelGateway`.
-5. Make the Sayuri shell workspace sandbox default-on where the OS supports it.
+1. Bind durable Sayuri sessions to the primary chat/turn lifecycle.
+2. Bridge existing approval UI responses into one-shot Sayuri authorizations.
+3. Wire Cloud.ru/DeepSeek-V4-Flash into the Model Gateway.
+4. Make workspace sandboxing default-on for Sayuri shell execution.
+5. Add project-scoped goal recovery and unfinished-task resume.
 
-Mass renaming of Letta internals remains intentionally deferred until each
-runtime boundary is owned by Sayuri and protected by tests.
+Mass renaming of imported Letta internals remains deferred. We keep replacing
+authority boundaries first, then branding and compatibility layers later.

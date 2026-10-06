@@ -35,6 +35,20 @@ const TERMINAL_STATUSES = new Set<SayuriTaskStatus>([
   "cancelled",
 ]);
 
+const SAYURI_TASK_STATUSES = new Set<SayuriTaskStatus>([
+  "created",
+  "planning",
+  "ready",
+  "running",
+  "waiting-user",
+  "waiting-external",
+  "verifying",
+  "checkpointed",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+
 const ALLOWED_TRANSITIONS: Readonly<
   Record<SayuriTaskStatus, ReadonlySet<SayuriTaskStatus>>
 > = {
@@ -64,6 +78,43 @@ function assertTimestamp(timestamp: string): void {
   }
 }
 
+export function validateSayuriTaskState(task: SayuriTaskState): void {
+  if (!task.id.trim()) throw new Error("Task id is required.");
+  if (!task.goal.trim()) throw new Error("Task goal is required.");
+  if (!SAYURI_TASK_STATUSES.has(task.status)) {
+    throw new Error(`Unknown Sayuri task status "${task.status}".`);
+  }
+  if (!Number.isSafeInteger(task.revision) || task.revision < 0) {
+    throw new Error("Task revision must be a non-negative safe integer.");
+  }
+  assertTimestamp(task.createdAt);
+  assertTimestamp(task.updatedAt);
+
+  const checkpointIds = new Set<string>();
+  for (const checkpoint of task.checkpoints) {
+    if (!checkpoint.id.trim()) throw new Error("Checkpoint id is required.");
+    if (checkpointIds.has(checkpoint.id)) {
+      throw new Error(`Duplicate checkpoint id "${checkpoint.id}".`);
+    }
+    checkpointIds.add(checkpoint.id);
+    if (!checkpoint.summary.trim()) {
+      throw new Error("Checkpoint summary is required.");
+    }
+    if (!checkpoint.nextAction.trim()) {
+      throw new Error("Checkpoint nextAction is required.");
+    }
+    assertTimestamp(checkpoint.createdAt);
+    if (
+      !Array.isArray(checkpoint.verifiedReceiptIds) ||
+      checkpoint.verifiedReceiptIds.some(
+        (receiptId) => typeof receiptId !== "string" || !receiptId.trim(),
+      )
+    ) {
+      throw new Error("Checkpoint verifiedReceiptIds must contain valid ids.");
+    }
+  }
+}
+
 export function createSayuriTask(input: {
   id: string;
   goal: string;
@@ -76,7 +127,7 @@ export function createSayuriTask(input: {
   const now = input.now ?? new Date().toISOString();
   assertTimestamp(now);
 
-  return {
+  const task: SayuriTaskState = {
     id,
     goal,
     status: "created",
@@ -85,6 +136,8 @@ export function createSayuriTask(input: {
     updatedAt: now,
     checkpoints: [],
   };
+  validateSayuriTaskState(task);
+  return task;
 }
 
 export function transitionSayuriTask(
@@ -92,6 +145,7 @@ export function transitionSayuriTask(
   nextStatus: SayuriTaskStatus,
   now: string = new Date().toISOString(),
 ): SayuriTaskState {
+  validateSayuriTaskState(task);
   assertTimestamp(now);
   if (TERMINAL_STATUSES.has(task.status)) {
     throw new Error(`Task is terminal in status "${task.status}".`);
@@ -113,6 +167,7 @@ export function checkpointSayuriTask(
   task: SayuriTaskState,
   checkpoint: SayuriTaskCheckpoint,
 ): SayuriTaskState {
+  validateSayuriTaskState(task);
   if (
     task.status !== "running" &&
     task.status !== "verifying" &&
@@ -134,11 +189,13 @@ export function checkpointSayuriTask(
     throw new Error(`Checkpoint "${checkpoint.id}" already exists.`);
   }
 
-  return {
+  const next = {
     ...task,
-    status: "checkpointed",
+    status: "checkpointed" as const,
     revision: task.revision + 1,
     updatedAt: checkpoint.createdAt,
     checkpoints: [...task.checkpoints, { ...checkpoint }],
   };
+  validateSayuriTaskState(next);
+  return next;
 }

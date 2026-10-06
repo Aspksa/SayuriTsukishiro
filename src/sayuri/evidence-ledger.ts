@@ -29,7 +29,9 @@ export interface SayuriEvidenceReceipt {
   metadata?: Readonly<Record<string, SayuriEvidenceMetadataValue>>;
 }
 
-function validateReceipt(receipt: SayuriEvidenceReceipt): void {
+export function validateSayuriEvidenceReceipt(
+  receipt: SayuriEvidenceReceipt,
+): void {
   if (!receipt.id.trim()) throw new Error("Evidence receipt id is required.");
   if (!receipt.executionId.trim()) {
     throw new Error("Evidence execution id is required.");
@@ -44,15 +46,14 @@ function validateReceipt(receipt: SayuriEvidenceReceipt): void {
 /**
  * Append-only evidence collection for one Sayuri runtime process.
  *
- * Persistence is deliberately left to the next integration layer; the ledger
- * establishes immutable receipt semantics first so storage can be swapped
- * without changing verifier behavior.
+ * Durable stores may hydrate the ledger again after a restart; immutable
+ * receipt IDs keep verification deterministic across process boundaries.
  */
 export class SayuriEvidenceLedger {
   readonly #receipts = new Map<string, SayuriEvidenceReceipt>();
 
   append(receipt: SayuriEvidenceReceipt): void {
-    validateReceipt(receipt);
+    validateSayuriEvidenceReceipt(receipt);
     if (this.#receipts.has(receipt.id)) {
       throw new Error(`Evidence receipt "${receipt.id}" already exists.`);
     }

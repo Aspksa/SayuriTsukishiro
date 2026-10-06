@@ -169,7 +169,7 @@ describe("Sayuri real tool execution control", () => {
     expect(await readFile(targetPath, "utf8")).toBe("verified");
     expect(controller.verifyToolCall("write-approved").verdict).toBe("verified");
 
-    const checkpointed = controller.checkpointToolCall({
+    const checkpointed = await controller.checkpointToolCall({
       toolCallId: "write-approved",
       summary: "Approved file write completed and verified.",
       nextAction: "Continue to the next planned step.",

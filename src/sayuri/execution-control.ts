@@ -13,6 +13,7 @@ import {
 import {
   SayuriEvidenceLedger,
   type SayuriEvidenceKind,
+  type SayuriEvidenceReceipt,
   type SayuriEvidenceTrust,
 } from "./evidence-ledger";
 import { type SayuriPlan, validateSayuriPlan } from "./planner";
@@ -20,6 +21,7 @@ import {
   type SayuriVerificationResult,
   verifySayuriResult,
 } from "./result-verifier";
+import type { SayuriBrainStateStore } from "./state-store";
 import {
   checkpointSayuriTask,
   type SayuriTaskState,
@@ -81,6 +83,7 @@ export interface SayuriExecutionControllerOptions {
   plan: SayuriPlan;
   scopeRoot: string;
   ledger?: SayuriEvidenceLedger;
+  stateStore?: SayuriBrainStateStore;
   authorizations?: readonly SayuriPlannedToolAuthorization[];
 }
 
@@ -147,6 +150,7 @@ export class SayuriExecutionController {
   readonly #scopeRoot: string;
   readonly #plan: SayuriPlan;
   readonly #ledger: SayuriEvidenceLedger;
+  readonly #stateStore?: SayuriBrainStateStore;
   readonly #authorizations = new Map<
     string,
     SayuriPlannedToolAuthorization
@@ -179,6 +183,13 @@ export class SayuriExecutionController {
     this.#plan = options.plan;
     this.#scopeRoot = resolve(options.scopeRoot);
     this.#ledger = options.ledger ?? new SayuriEvidenceLedger();
+    this.#stateStore = options.stateStore;
+    for (const receipt of this.#ledger.snapshot()) {
+      const toolCallId = receipt.metadata?.toolCallId;
+      if (typeof toolCallId === "string" && toolCallId.trim()) {
+        this.#executionByToolCall.set(toolCallId, receipt.executionId);
+      }
+    }
     for (const authorization of options.authorizations ?? []) {
       this.registerAuthorization(authorization);
     }
@@ -191,6 +202,16 @@ export class SayuriExecutionController {
 
   get scopeRoot(): string {
     return this.#scopeRoot;
+  }
+
+  get plan(): SayuriPlan {
+    return {
+      ...this.#plan,
+      steps: this.#plan.steps.map((step) => ({
+        ...step,
+        ...(step.receiptIds ? { receiptIds: [...step.receiptIds] } : {}),
+      })),
+    };
   }
 
   get task(): SayuriTaskState {
@@ -232,7 +253,7 @@ export class SayuriExecutionController {
     this.#authorizations.delete(toolCallId);
   }
 
-  evidenceSnapshot() {
+  evidenceSnapshot(): SayuriEvidenceReceipt[] {
     return this.#ledger.snapshot();
   }
 
@@ -255,12 +276,12 @@ export class SayuriExecutionController {
     return verifySayuriResult({ executionId, receiptIds }, this.#ledger);
   }
 
-  checkpointToolCall(input: {
+  async checkpointToolCall(input: {
     toolCallId: string;
     summary: string;
     nextAction: string;
     createdAt?: string;
-  }): SayuriTaskState {
+  }): Promise<SayuriTaskState> {
     const executionId = this.executionIdForToolCall(input.toolCallId);
     if (!executionId) {
       throw new Error(
@@ -280,10 +301,28 @@ export class SayuriExecutionController {
       nextAction: input.nextAction,
       verifiedReceiptIds: verification.receipts.map((receipt) => receipt.id),
     });
+    await this.persistState();
     return this.task;
   }
 
-  private authorize(request: RuntimeToolExecutionRequest) {
+  async persistState(): Promise<void> {
+    await this.#stateStore?.saveSnapshot(this.#task, this.#plan);
+  }
+
+  private async appendReceipt(
+    receipt: SayuriEvidenceReceipt,
+  ): Promise<void> {
+    this.#ledger.append(receipt);
+    try {
+      await this.#stateStore?.appendReceipt(this.#task.id, receipt);
+    } catch (error) {
+      throw new Error(
+        `Failed to persist Sayuri evidence receipt "${receipt.id}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private async authorize(request: RuntimeToolExecutionRequest) {
     const risk = classifySayuriToolRisk(request.toolName);
     const authorization = request.toolCallId
       ? this.#authorizations.get(request.toolCallId)
@@ -323,7 +362,7 @@ export class SayuriExecutionController {
     });
 
     if (decision.decision !== "allow") {
-      this.#ledger.append({
+      await this.appendReceipt({
         id: `receipt-${randomUUID()}`,
         executionId,
         taskId: this.#task.id,
@@ -339,6 +378,7 @@ export class SayuriExecutionController {
           risk,
           planned,
           scopeApproved,
+          ...(request.toolCallId ? { toolCallId: request.toolCallId } : {}),
         },
       });
       return {
@@ -358,13 +398,15 @@ export class SayuriExecutionController {
     };
   }
 
-  private record(outcome: RuntimeToolExecutionOutcome): void {
+  private async record(
+    outcome: RuntimeToolExecutionOutcome,
+  ): Promise<void> {
     const executionId = outcome.executionId;
     if (!executionId) {
       throw new Error("Controlled tool execution is missing executionId.");
     }
     const metadata = this.#metadataByExecution.get(executionId);
-    this.#ledger.append({
+    await this.appendReceipt({
       id: `receipt-${randomUUID()}`,
       executionId,
       taskId: this.#task.id,
@@ -391,6 +433,40 @@ export function createSayuriExecutionController(
   options: SayuriExecutionControllerOptions,
 ): SayuriExecutionController {
   return new SayuriExecutionController(options);
+}
+
+export async function createDurableSayuriExecutionController(
+  options: SayuriExecutionControllerOptions & {
+    stateStore: SayuriBrainStateStore;
+  },
+): Promise<SayuriExecutionController> {
+  const controller = new SayuriExecutionController(options);
+  await controller.persistState();
+  return controller;
+}
+
+export async function resumeSayuriExecutionController(input: {
+  stateStore: SayuriBrainStateStore;
+  taskId: string;
+  scopeRoot: string;
+}): Promise<SayuriExecutionController> {
+  const snapshot = await input.stateStore.loadSnapshot(input.taskId);
+  if (!snapshot) {
+    throw new Error(
+      `No durable Sayuri state found for task "${input.taskId}".`,
+    );
+  }
+  const ledger = new SayuriEvidenceLedger();
+  for (const receipt of await input.stateStore.loadReceipts(input.taskId)) {
+    ledger.append(receipt);
+  }
+  return new SayuriExecutionController({
+    task: snapshot.task,
+    plan: snapshot.plan,
+    scopeRoot: input.scopeRoot,
+    ledger,
+    stateStore: input.stateStore,
+  });
 }
 
 export function runWithSayuriExecutionController<T>(
