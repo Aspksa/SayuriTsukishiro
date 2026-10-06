@@ -1,27 +1,27 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.68  
-**Cognitive Core:** 0.12.0
+**Sayuri version:** 0.1.69  
+**Cognitive Core:** 0.13.0
 
-## Closed stage: Planner v1 Proposal Boundary
+## Closed stage: Planner Runtime Adapter
 
-DeepSeek is now constrained to proposing plan structure only. The accepted
-proposal shape contains task/goal identity plus ordered steps with title, intent,
-optional intended tool, and backward-only dependencies.
+Planner v1 is now connected to the exact Sayuri model route.
 
-The proposal cannot declare risk, evidence policy, status, permissions,
-approval state, tool arguments, or receipts. Unknown fields are rejected.
+The runtime configures Cloud.ru through the existing local credential store,
+resolves only `openai-compatible/DeepSeek-V4-Flash`, sends one proposal prompt,
+accepts text only as strict JSON, parses it through the Planner v1 proposal
+boundary, and deterministically compiles risk/evidence requirements.
 
-Risk and evidence requirements are assigned deterministically from the intended
-tool by Sayuri code. The compiled plan is validated before it can reach
-execution control, and execution approval matching now also honors a
-planner-bound tool name when present.
+A new task is persisted only after all of those checks succeed. Its lifecycle is
+stored as `ready`; Planner Runtime never creates an execution controller and
+never grants approval or tool authority.
 
-This keeps the LLM useful for decomposition without turning plan text into
-authority.
+Malformed JSON, authority fields, identity mismatches, invalid dependencies, and
+invalid compiled plans fail before the state store receives a runnable plan.
 
 ## NEXT_ACTION
 
-**Add a Planner Runtime adapter that requests one JSON proposal from the exact
-DeepSeek-V4-Flash route, parses it through Planner v1, and persists the compiled
-plan before any execution controller can be created.**
+**Build a Project Work Orchestrator that first recovers unfinished work;
+otherwise selects an eligible long-term goal, invokes Planner Runtime, links the
+persisted task to the goal, transitions `ready -> running` explicitly, and
+only then creates the primary execution controller.**

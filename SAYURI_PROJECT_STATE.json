@@ -1,13 +1,14 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.68",
-  "milestone": "Planner v1 Proposal Boundary",
+  "version": "0.1.69",
+  "milestone": "Planner Runtime Adapter",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
+    "runtime_model_handle": "openai-compatible/DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "planner-v1-proposal-boundary",
-  "next_action": "Add a Planner Runtime adapter that requests one JSON proposal from the exact DeepSeek-V4-Flash route, parses it through Planner v1, and persists the compiled plan before any execution controller can be created."
+  "current_stage": "planner-runtime-persisted",
+  "next_action": "Build a Project Work Orchestrator that first recovers unfinished work; otherwise selects an eligible long-term goal, invokes Planner Runtime, links the persisted task to the goal, transitions ready->running explicitly, and only then creates the primary execution controller."
 }
