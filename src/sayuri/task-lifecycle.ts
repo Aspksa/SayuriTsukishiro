@@ -78,6 +78,20 @@ function assertTimestamp(timestamp: string): void {
   }
 }
 
+export function isSayuriTaskStatus(value: unknown): value is SayuriTaskStatus {
+  return typeof value === "string" && SAYURI_TASK_STATUSES.has(
+    value as SayuriTaskStatus,
+  );
+}
+
+export function isTerminalSayuriTaskStatus(status: SayuriTaskStatus): boolean {
+  return TERMINAL_STATUSES.has(status);
+}
+
+export function isUnfinishedSayuriTaskStatus(status: SayuriTaskStatus): boolean {
+  return !isTerminalSayuriTaskStatus(status);
+}
+
 export function validateSayuriTaskState(task: SayuriTaskState): void {
   if (!task.id.trim()) throw new Error("Task id is required.");
   if (!task.goal.trim()) throw new Error("Task goal is required.");

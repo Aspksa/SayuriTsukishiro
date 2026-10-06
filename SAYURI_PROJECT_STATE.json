@@ -1,14 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.64",
-  "milestone": "Primary Session Bootstrap",
+  "version": "0.1.65",
+  "milestone": "Project Task Registry",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
-    "runtime_model_handle": "openai-compatible/DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "primary-session-bootstrap",
-  "next_action": "Add a durable project-scoped task registry that indexes active, waiting, checkpointed, completed, failed, and cancelled Sayuri tasks and can recover unfinished work by project after restart."
+  "current_stage": "project-task-registry",
+  "next_action": "Add automatic unfinished-task recovery that selects the latest recoverable task for a project, distinguishes waiting-user/waiting-external from executable tasks, and resumes only through explicit lifecycle transitions."
 }

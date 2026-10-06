@@ -28,27 +28,36 @@ import {
   type SayuriBrainStateStore,
 } from "./state-store";
 import {
+  FileSayuriTaskRegistry,
+  ProjectIndexedSayuriBrainStateStore,
+  type SayuriTaskRegistry,
+} from "./task-registry";
+import {
   createSayuriTask,
   transitionSayuriTask,
 } from "./task-lifecycle";
 import { withSayuriTurnOptions } from "./turn-context";
 
 export interface SayuriPrimarySession {
+  projectId: string;
   agentId: string;
   conversationId: string;
   controller: SayuriExecutionController;
   stateStore: SayuriBrainStateStore;
+  taskRegistry: SayuriTaskRegistry;
   modelRuntime: SayuriModelRuntimeDescriptor;
   resumed: boolean;
 }
 
 export interface BootstrapSayuriPrimarySessionInput {
+  projectId: string;
   agentId: string;
   conversationId: string;
   taskId: string;
   scopeRoot: string;
   modelGateway: ConfigureSayuriModelRuntimeInput;
   stateStore?: SayuriBrainStateStore;
+  taskRegistry?: SayuriTaskRegistry;
   modelsRuntime?: LocalPiModelsRuntime;
   goal?: string;
   plan?: SayuriPlan;
@@ -56,6 +65,9 @@ export interface BootstrapSayuriPrimarySessionInput {
 }
 
 function assertSessionIdentity(input: BootstrapSayuriPrimarySessionInput): void {
+  if (!input.projectId.trim()) {
+    throw new Error("Sayuri session projectId is required.");
+  }
   if (!input.agentId.trim()) throw new Error("Sayuri session agentId is required.");
   if (!input.conversationId.trim()) {
     throw new Error("Sayuri session conversationId is required.");
@@ -110,7 +122,15 @@ export async function bootstrapSayuriPrimarySession(
     ...(input.modelsRuntime ? { modelsRuntime: input.modelsRuntime } : {}),
   });
 
-  const stateStore = input.stateStore ?? new FileSayuriBrainStateStore();
+  const innerStateStore = input.stateStore ?? new FileSayuriBrainStateStore();
+  const taskRegistry = input.taskRegistry ?? new FileSayuriTaskRegistry();
+  const stateStore = new ProjectIndexedSayuriBrainStateStore({
+    inner: innerStateStore,
+    registry: taskRegistry,
+    projectId: input.projectId,
+    agentId: input.agentId,
+    conversationId: input.conversationId,
+  });
   const snapshot = await stateStore.loadSnapshot(input.taskId);
 
   let controller: SayuriExecutionController;
@@ -134,6 +154,7 @@ export async function bootstrapSayuriPrimarySession(
       taskId: input.taskId,
       scopeRoot: input.scopeRoot,
     });
+    await controller.persistState();
     resumed = true;
   } else {
     assertNewTaskInput(input);
@@ -150,10 +171,12 @@ export async function bootstrapSayuriPrimarySession(
   }
 
   return {
+    projectId: input.projectId,
     agentId: input.agentId,
     conversationId: input.conversationId,
     controller,
     stateStore,
+    taskRegistry,
     modelRuntime,
     resumed,
   };

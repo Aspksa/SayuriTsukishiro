@@ -1,43 +1,27 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.64  
-**Cognitive Core:** 0.8.0
+**Sayuri version:** 0.1.65  
+**Cognitive Core:** 0.9.0
 
-## Closed stage: Primary Session Bootstrap
+## Closed stage: Project Task Registry
 
-Sayuri now has one bootstrap path that assembles the previously separate
-safety and cognition components into a primary working session.
+Durable task state is now indexed by project instead of being discoverable only
+when a caller already knows the task ID.
 
-Bootstrap order:
+Each registry entry records project, task, plan, agent, conversation, goal,
+lifecycle status, revision, checkpoint count, latest checkpoint, and next
+action. Terminal tasks remain in history; unfinished-task lookup excludes
+completed, failed, and cancelled work.
 
-```
-validate session identity
-      ↓
-configure Cloud.ru credential/base URL
-      ↓
-verify exact DeepSeek-V4-Flash model
-      ↓
-load durable task state
-      ├─ exists → resume task/plan/evidence
-      └─ absent → create planning → ready → running task
-      ↓
-bind SayuriExecutionController
-      ↓
-withSayuriTurnOptions
-      ↓
-sendMessageStreamWithBackend
-```
+The primary session wraps its durable state store with the project index. Every
+saved task/checkpoint therefore refreshes the project registry, and a resumed
+session re-publishes its current durable state to repair a missing/stale index.
 
-Every session turn now forces the exact runtime model handle in both the request
-surface and the captured runtime model route. A caller attempting to substitute
-another model is rejected.
-
-Durable resume does not silently replace the existing task goal or plan.
-Cloud.ru credentials remain in the local provider credential store and are not
-written into Sayuri task state.
+Registry files use encoded project IDs, atomic replacement, and cross-process
+locks.
 
 ## NEXT_ACTION
 
-**Add a durable project-scoped task registry that indexes active, waiting,
-checkpointed, completed, failed, and cancelled Sayuri tasks and can recover
-unfinished work by project after restart.**
+**Add automatic unfinished-task recovery that selects the latest recoverable
+task for a project, distinguishes waiting-user/waiting-external from executable
+tasks, and resumes only through explicit lifecycle transitions.**

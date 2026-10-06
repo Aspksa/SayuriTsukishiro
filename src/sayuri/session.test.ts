@@ -13,6 +13,7 @@ import {
   sendSayuriSessionMessage,
 } from "./session";
 import { FileSayuriBrainStateStore } from "./state-store";
+import { FileSayuriTaskRegistry } from "./task-registry";
 
 describe("Sayuri primary session bootstrap", () => {
   const roots: string[] = [];
@@ -52,13 +53,16 @@ describe("Sayuri primary session bootstrap", () => {
   test("configures model, starts durable task, and sends through the Sayuri turn boundary", async () => {
     const env = await setup();
     const stateStore = new FileSayuriBrainStateStore(env.stateRoot);
+    const taskRegistry = new FileSayuriTaskRegistry(env.stateRoot);
     const session = await bootstrapSayuriPrimarySession({
+      projectId: "project-main",
       agentId: "sayuri-primary",
       conversationId: "default",
       taskId: "task-primary",
       goal: "Run one controlled primary session",
       scopeRoot: env.scopeRoot,
       stateStore,
+      taskRegistry,
       modelsRuntime: env.runtime,
       modelGateway: {
         baseUrl: "https://cloud.example.test/v1",
@@ -85,6 +89,9 @@ describe("Sayuri primary session bootstrap", () => {
 
     expect(session.resumed).toBe(false);
     expect(session.controller.task.status).toBe("running");
+    expect(
+      (await taskRegistry.getTask("project-main", "task-primary"))?.status,
+    ).toBe("running");
     expect((await stateStore.loadSnapshot("task-primary"))?.task.status).toBe(
       "running",
     );
@@ -123,12 +130,15 @@ describe("Sayuri primary session bootstrap", () => {
   test("resumes durable state without accepting a replacement plan", async () => {
     const env = await setup();
     const stateStore = new FileSayuriBrainStateStore(env.stateRoot);
+    const taskRegistry = new FileSayuriTaskRegistry(env.stateRoot);
     const base = {
+      projectId: "project-main",
       agentId: "sayuri-primary",
       conversationId: "default",
       taskId: "task-resume",
       scopeRoot: env.scopeRoot,
       stateStore,
+      taskRegistry,
       modelsRuntime: env.runtime,
       modelGateway: {
         baseUrl: "https://cloud.example.test/v1",
