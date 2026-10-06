@@ -7,6 +7,6 @@ import { SAYURI_MODULE_VERSIONS } from "./module-versions";
  * independently so the upstream-compatible execution layer can evolve without
  * conflating its release number with Sayuri's cognitive architecture.
  */
-export const SAYURI_PROJECT_VERSION = "0.1.60";
+export const SAYURI_PROJECT_VERSION = "0.1.61";
 export const SAYURI_COGNITIVE_CORE_VERSION =
   SAYURI_MODULE_VERSIONS.cognitiveCore;

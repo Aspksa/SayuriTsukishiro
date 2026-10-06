@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { isAbsolute, relative, resolve } from "node:path";
 import {
+  type RuntimeToolApprovalGrant,
   type RuntimeToolExecutionControl,
   type RuntimeToolExecutionOutcome,
   type RuntimeToolExecutionRequest,
@@ -76,6 +77,8 @@ export interface SayuriPlannedToolAuthorization {
   stepId: string;
   scopeApproved: boolean;
   approvalGranted: boolean;
+  toolName?: string;
+  argsFingerprint?: string;
 }
 
 export interface SayuriExecutionControllerOptions {
@@ -138,6 +141,16 @@ function receiptTrust(
   return request.toolKind === "builtin" ? "direct" : "reported";
 }
 
+function fingerprintArgs(args: Readonly<Record<string, unknown>>): string {
+  return JSON.stringify(args);
+}
+
+function executablePlanSteps(plan: SayuriPlan) {
+  return plan.steps.filter(
+    (step) => step.status === "in-progress" || step.status === "pending",
+  );
+}
+
 export function classifySayuriToolRisk(toolName: string): SayuriActionRisk {
   if (READ_ONLY_TOOLS.has(toolName)) return "read";
   if (PROJECT_MUTATION_TOOLS.has(toolName)) return "project-mutation";
@@ -157,6 +170,7 @@ export class SayuriExecutionController {
   >();
   readonly #executionByToolCall = new Map<string, string>();
   readonly #metadataByExecution = new Map<string, SayuriExecutionMetadata>();
+  readonly #consumedApprovalToolCallIds = new Set<string>();
   #task: SayuriTaskState;
 
   readonly runtimeControl: RuntimeToolExecutionControl;
@@ -188,6 +202,9 @@ export class SayuriExecutionController {
       const toolCallId = receipt.metadata?.toolCallId;
       if (typeof toolCallId === "string" && toolCallId.trim()) {
         this.#executionByToolCall.set(toolCallId, receipt.executionId);
+        if (receipt.outcome !== "denied") {
+          this.#consumedApprovalToolCallIds.add(toolCallId);
+        }
       }
     }
     for (const authorization of options.authorizations ?? []) {
@@ -196,6 +213,7 @@ export class SayuriExecutionController {
 
     this.runtimeControl = {
       authorize: (request) => this.authorize(request),
+      grantApproval: (grant) => this.grantApproval(grant),
       record: (outcome) => this.record(outcome),
     };
   }
@@ -251,6 +269,71 @@ export class SayuriExecutionController {
 
   revokeAuthorization(toolCallId: string): void {
     this.#authorizations.delete(toolCallId);
+  }
+
+  private grantApproval(grant: RuntimeToolApprovalGrant) {
+    if (this.#consumedApprovalToolCallIds.has(grant.toolCallId)) {
+      return {
+        decision: "deny" as const,
+        reason: "This tool-call approval has already been consumed.",
+      };
+    }
+
+    const risk = classifySayuriToolRisk(grant.toolName);
+    if (risk !== "project-mutation") {
+      return {
+        decision: "deny" as const,
+        reason:
+          "Automatic approval bridging is currently limited to scoped project mutations.",
+      };
+    }
+
+    const syntheticRequest: RuntimeToolExecutionRequest = {
+      toolName: grant.toolName,
+      toolKind: "builtin",
+      toolCallId: grant.toolCallId,
+      args: grant.args,
+      workingDirectory: grant.workingDirectory,
+    };
+    if (!requestInsideScope(syntheticRequest, this.#scopeRoot)) {
+      return {
+        decision: "deny" as const,
+        reason: "Approved mutation is outside the Sayuri workspace scope.",
+      };
+    }
+
+    const candidates = executablePlanSteps(this.#plan).filter(
+      (step) => RISK_RANK[step.risk] >= RISK_RANK[risk],
+    );
+    const inProgress = candidates.filter(
+      (step) => step.status === "in-progress",
+    );
+    const selected =
+      inProgress.length === 1
+        ? inProgress[0]
+        : inProgress.length === 0 && candidates.length === 1
+          ? candidates[0]
+          : undefined;
+    if (!selected) {
+      return {
+        decision: "deny" as const,
+        reason:
+          "Human approval could not be mapped unambiguously to one executable plan step.",
+      };
+    }
+
+    this.registerAuthorization({
+      toolCallId: grant.toolCallId,
+      stepId: selected.id,
+      scopeApproved: true,
+      approvalGranted: true,
+      toolName: grant.toolName,
+      argsFingerprint: fingerprintArgs(grant.args),
+    });
+    return {
+      decision: "allow" as const,
+      reason: `Human approval bridged to plan step "${selected.id}".`,
+    };
   }
 
   evidenceSnapshot(): SayuriEvidenceReceipt[] {
@@ -337,10 +420,18 @@ export class SayuriExecutionController {
       (risk === "read" || authorization?.scopeApproved === true);
     const stepCoversRisk =
       step !== undefined && RISK_RANK[step.risk] >= RISK_RANK[risk];
+    const approvedToolMatches =
+      authorization?.toolName === undefined ||
+      authorization.toolName === request.toolName;
+    const approvedArgsMatch =
+      authorization?.argsFingerprint === undefined ||
+      authorization.argsFingerprint === fingerprintArgs(request.args);
     const planned =
       authorization !== undefined &&
       step !== undefined &&
       stepCoversRisk &&
+      approvedToolMatches &&
+      approvedArgsMatch &&
       step.status !== "completed" &&
       step.status !== "cancelled";
 
@@ -389,6 +480,11 @@ export class SayuriExecutionController {
             ? `Approval is required before execution. ${decision.reason}`
             : decision.reason,
       };
+    }
+
+    if (request.toolCallId && authorization?.approvalGranted === true) {
+      this.#consumedApprovalToolCallIds.add(request.toolCallId);
+      this.#authorizations.delete(request.toolCallId);
     }
 
     return {

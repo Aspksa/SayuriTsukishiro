@@ -43,10 +43,29 @@ export interface RuntimeToolExecutionOutcome {
   durationMs: number;
 }
 
+export interface RuntimeToolApprovalGrant {
+  toolCallId: string;
+  toolName: string;
+  args: Readonly<Record<string, unknown>>;
+  workingDirectory: string;
+}
+
+export interface RuntimeToolApprovalDecision {
+  decision: "allow" | "deny";
+  reason?: string;
+}
+
 export interface RuntimeToolExecutionControl {
   authorize(
     request: RuntimeToolExecutionRequest,
   ): RuntimeToolExecutionDecision | Promise<RuntimeToolExecutionDecision>;
+  /**
+   * Bridge a human-approved tool call into the higher-level policy layer.
+   * Implementations should treat grants as one-shot and bind them to toolCallId.
+   */
+  grantApproval?(
+    grant: RuntimeToolApprovalGrant,
+  ): RuntimeToolApprovalDecision | Promise<RuntimeToolApprovalDecision>;
   record?(
     outcome: RuntimeToolExecutionOutcome,
   ): void | Promise<void>;

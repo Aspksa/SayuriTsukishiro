@@ -1,11 +1,10 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.60",
-  "milestone": "Turn Execution Context",
+  "version": "0.1.61",
+  "milestone": "One-shot Approval Bridge",
   "base_runtime": {
     "name": "Letta Code",
-    "imported_version": "0.34.4",
-    "policy": "preserve proven runtime components; Sayuri owns cognition and product policy"
+    "imported_version": "0.34.4"
   },
   "model_policy": {
     "provider": "cloud.ru",
@@ -13,12 +12,13 @@
     "automatic_fallbacks": false
   },
   "modules": {
-    "cognitive_core": "0.4.0",
+    "cognitive_core": "0.5.0",
     "model_gateway": "0.1.0",
-    "action_broker": "0.2.0",
-    "execution_control": "0.3.0",
+    "action_broker": "0.3.0",
+    "execution_control": "0.4.0",
     "brain_state_store": "0.1.0",
     "turn_context": "0.1.0",
+    "approval_bridge": "0.1.0",
     "task_lifecycle": "0.3.0",
     "planner_contract": "0.2.0",
     "evidence_ledger": "0.3.0",
@@ -26,12 +26,13 @@
     "permissions_profile": "0.1.0"
   },
   "completed": [
-    "durable brain state persists task, plan, receipts, and checkpoints",
-    "sendMessageStream can capture an explicit runtime execution control in its turn-scoped tool snapshot",
-    "Sayuri can build isolated per-turn runtime context without global controller registration",
-    "agent and conversation identity are bound into the captured tool execution context",
-    "existing callers remain unchanged when no runtime context is supplied"
+    "existing human approval can be presented to the runtime execution control before executeTool",
+    "Sayuri maps approval to exactly one executable plan step or fails closed",
+    "approved tool name and arguments are bound to the authorization",
+    "approval grants are one-shot and replay attempts are denied",
+    "auto-bridge is limited to project mutations with an in-scope file path",
+    "shell authority remains blocked until sandbox hardening"
   ],
-  "current_stage": "turn-context-ready",
-  "next_action": "Bridge an existing human approval decision into a one-shot Sayuri planned tool authorization before executeTool runs."
+  "current_stage": "approval-bridge-complete",
+  "next_action": "Make workspace sandboxing default-on for Sayuri shell execution, then allow system-mutation approval bridging only when the sandbox is active."
 }
