@@ -1,25 +1,21 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.73  
-**Cognitive Core:** 0.17.0
+**Sayuri version:** 0.1.74  
+**Cognitive Core:** 0.17.1
 
-## Closed stage: Goal Success Verification
+## Closed stage: Provider Stream Build Repair
 
-Long-term goals can no longer become completed merely because a model says the
-work looks finished.
+GitHub Actions exposed a syntax defect in the exact-model route integration:
+`exactModelSelectionForTurn` had been inserted as a free function inside the
+`PiStreamAdapter` class body.
 
-A goal completion evaluation now requires every linked task to exist in the same
-project registry and have deterministic lifecycle status `completed`.
-Additionally, every textual success criterion must have durable explicit
-user-confirmation evidence. Evidence is project/goal/criterion scoped and stored
-separately from model output.
+The helper is now a private class method and both model-resolution call sites use
+`this.exactModelSelectionForTurn(...)`. This restores valid TypeScript/Bun
+syntax without changing the exact Cloud.ru model policy.
 
-Goals with no textual success criteria still require at least one linked,
-completed task. Failed, cancelled, waiting, running, or missing tasks keep the
-goal active.
-
-Only after the Goal Success Gate passes may the goal transition to
-`completed`.
+The failure was observed in the wheel build on Windows at
+`src/backend/dev/pi-stream-adapter.ts:535`; the same source defect affected all
+wheel platforms.
 
 ## NEXT_ACTION
 

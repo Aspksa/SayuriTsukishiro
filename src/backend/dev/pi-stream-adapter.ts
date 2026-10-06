@@ -532,7 +532,7 @@ export class PiStreamAdapter implements ProviderStreamAdapter {
     } as never);
   }
 
-function exactModelSelectionForTurn(input: ProviderTurnInput): {
+  private exactModelSelectionForTurn(input: ProviderTurnInput): {
   model: string;
   modelSettings: Record<string, unknown>;
 } {
@@ -566,7 +566,7 @@ function exactModelSelectionForTurn(input: ProviderTurnInput): {
     // Resolve through the same per-backend Models runtime as streamOnce. The
     // provider-published Model remains the source of truth for contextWindow;
     // Letta owns only the harness policy deciding when to compact around it.
-    const selection = exactModelSelectionForTurn(input);
+    const selection = this.exactModelSelectionForTurn(input);
     const localModel = await resolveAvailableLocalModelForTurn({
       model: selection.model,
       modelSettings: selection.modelSettings,
@@ -599,7 +599,7 @@ function exactModelSelectionForTurn(input: ProviderTurnInput): {
     input: ProviderTurnInput,
   ): AsyncIterable<ProviderStreamEvent> {
     const tools = toPiTools(input.clientTools);
-    const selection = exactModelSelectionForTurn(input);
+    const selection = this.exactModelSelectionForTurn(input);
     const localModel = await resolveAvailableLocalModelForTurn({
       model: selection.model,
       modelSettings: selection.modelSettings,
