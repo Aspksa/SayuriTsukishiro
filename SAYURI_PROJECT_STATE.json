@@ -1,7 +1,7 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.57",
-  "milestone": "Cognitive Core Foundation",
+  "version": "0.1.58",
+  "milestone": "Execution Control Integration",
   "base_runtime": {
     "name": "Letta Code",
     "imported_version": "0.34.4",
@@ -13,20 +13,30 @@
     "automatic_fallbacks": false
   },
   "modules": {
-    "cognitive_core": "0.1.0",
+    "cognitive_core": "0.2.0",
     "model_gateway": "0.1.0",
-    "action_broker": "0.1.0",
-    "task_lifecycle": "0.1.0",
-    "planner_contract": "0.1.0",
-    "evidence_ledger": "0.1.0",
-    "result_verifier": "0.1.0"
+    "action_broker": "0.2.0",
+    "execution_control": "0.1.0",
+    "task_lifecycle": "0.2.0",
+    "planner_contract": "0.2.0",
+    "evidence_ledger": "0.2.0",
+    "result_verifier": "0.2.0",
+    "permissions_profile": "0.1.0"
   },
-  "current_stage": "foundation-created",
+  "completed": [
+    "runtime tool execution control seam added below Sayuri",
+    "Sayuri Action Broker connected to real built-in, mod, and external tool boundaries",
+    "default permission mode changed from unrestricted to standard",
+    "subagent launch permission mode changed from unrestricted to standard",
+    "tool calls receive execution ids and evidence receipts",
+    "successful direct executions can be verified and checkpointed"
+  ],
+  "current_stage": "execution-control-integrated",
   "next_stage": [
-    "wire Action Broker into the real tool execution boundary",
-    "replace unrestricted defaults for Sayuri execution paths",
-    "persist execution receipts and task checkpoints",
-    "route Cloud.ru through the Sayuri Model Gateway without provider fallback",
-    "add planner and verifier integration to the turn lifecycle"
+    "persist receipts and task checkpoints durably across process restarts",
+    "route Cloud.ru DeepSeek-V4-Flash through the Sayuri Model Gateway",
+    "bind Sayuri execution controller to the primary turn lifecycle",
+    "propagate approval grants from existing approval UI into planned tool authorizations",
+    "enable default-on workspace sandbox policy for Sayuri shell execution"
   ]
 }
