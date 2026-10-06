@@ -1,7 +1,7 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.59",
-  "milestone": "Durable Brain State",
+  "version": "0.1.60",
+  "milestone": "Turn Execution Context",
   "base_runtime": {
     "name": "Letta Code",
     "imported_version": "0.34.4",
@@ -13,11 +13,12 @@
     "automatic_fallbacks": false
   },
   "modules": {
-    "cognitive_core": "0.3.0",
+    "cognitive_core": "0.4.0",
     "model_gateway": "0.1.0",
     "action_broker": "0.2.0",
-    "execution_control": "0.2.0",
+    "execution_control": "0.3.0",
     "brain_state_store": "0.1.0",
+    "turn_context": "0.1.0",
     "task_lifecycle": "0.3.0",
     "planner_contract": "0.2.0",
     "evidence_ledger": "0.3.0",
@@ -25,20 +26,12 @@
     "permissions_profile": "0.1.0"
   },
   "completed": [
-    "runtime Action Broker boundary remains enforced for built-in, mod, and external tools",
-    "default and subagent permission modes remain standard",
-    "task and plan snapshots can be persisted atomically",
-    "execution receipts are persisted append-only under a cross-process file lock",
-    "verified execution evidence can be recovered after process restart",
-    "task checkpoints survive process restart",
-    "approval grants are intentionally not restored after restart"
+    "durable brain state persists task, plan, receipts, and checkpoints",
+    "sendMessageStream can capture an explicit runtime execution control in its turn-scoped tool snapshot",
+    "Sayuri can build isolated per-turn runtime context without global controller registration",
+    "agent and conversation identity are bound into the captured tool execution context",
+    "existing callers remain unchanged when no runtime context is supplied"
   ],
-  "current_stage": "durable-brain-state",
-  "next_stage": [
-    "bind durable Sayuri execution sessions to the primary turn lifecycle",
-    "bridge existing approval decisions into ephemeral planned authorizations",
-    "route Cloud.ru DeepSeek-V4-Flash through the Sayuri Model Gateway",
-    "make Sayuri shell workspace sandbox default-on where supported",
-    "introduce project-scoped goal recovery and unfinished-task resume"
-  ]
+  "current_stage": "turn-context-ready",
+  "next_action": "Bridge an existing human approval decision into a one-shot Sayuri planned tool authorization before executeTool runs."
 }

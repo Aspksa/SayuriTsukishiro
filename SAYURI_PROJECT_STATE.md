@@ -1,93 +1,60 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.59  
-**Cognitive Core:** 0.3.0  
+**Sayuri version:** 0.1.60  
+**Cognitive Core:** 0.4.0  
 **Base runtime:** Letta Code 0.34.4
 
-## Current architecture
+## Closed stage: Turn Execution Context
 
-Version 0.1.59 adds durable state below the cognitive lifecycle without putting
-mutable execution authority into the LLM.
+The primary message boundary can now carry an explicit runtime execution control
+into the exact turn-scoped tool snapshot that will later execute tool calls.
+No global Sayuri controller is installed: unrelated conversations remain
+unaffected.
 
 ```
-Goal / Task / Plan
-        ↓
-Sayuri Execution Controller
-        ↓
-Action Broker
-        ↓
-Runtime tool boundary
-        ↓
-Execution receipt
-        ↓
-Evidence Ledger
-        ↓
-Durable Brain State
-        ↓
-Result Verifier
-        ↓
-Checkpoint / Resume
+Sayuri controller
+      ↓
+withSayuriTurnOptions()
+      ↓
+sendMessageStream
+      ↓
+PreparedToolExecutionContext
+      ↓
+captured RuntimeContext
+      ↓
+tool call execution
 ```
 
-## Durable Brain State
+The captured context includes the conversation, agent, working directory,
+`standard` permission mode, and Sayuri's runtime execution control.
 
-The file-backed state store persists:
+## Why the controller is not globally enabled yet
 
-- task lifecycle snapshot;
-- validated plan snapshot;
-- append-only evidence receipts;
-- checkpoint state;
-- execution-to-tool-call evidence correlation.
+The existing runtime already has a human approval flow. A mutating tool is first
+paused for approval and is executed only after the approval decision returns.
+Sayuri must consume that existing approval as a one-shot grant before its own
+Action Broker sees the real execution. Enabling the controller globally before
+that bridge would safely block approved writes, but it would break expected
+workflow.
 
-Writes use atomic snapshot replacement and a cross-process lock. Task IDs are
-encoded before becoming path segments, so a model- or user-supplied task ID
-cannot escape the Sayuri state directory.
+## Durable state invariants retained
 
-The default state root is `~/.sayuri/state`. It can be overridden with
-`SAYURI_STATE_DIR`; callers may also inject an explicit store root.
-
-## Recovery policy
-
-A restarted Sayuri process can load the task, plan, receipts, restore evidence
-correlation, verify an already completed tool execution, and continue from a
-checkpoint.
-
-**Approval grants are deliberately not persisted.** A mutation that was approved
-before a process restart does not inherit that approval after restart. Sayuri
-must obtain a live approval again before a new mutating tool call.
-
-This separates durable knowledge ("what happened") from ephemeral authority
-("what may happen now").
-
-## Security invariants
-
-- default permission mode: `standard`;
-- subagent permission mode: `standard`;
-- read access is restricted to approved scope;
-- mutation requires task + plan + scope + live approval;
-- Action Broker is additive to existing runtime permission and sandbox guards;
-- missing or corrupt evidence does not become a successful checkpoint;
-- evidence persistence failure is surfaced rather than silently claiming
-  success.
+- task/plan snapshots survive restarts;
+- receipts are append-only and recoverable;
+- checkpoints reference verified receipt IDs;
+- approval authority is not durable;
+- default and subagent permission modes remain `standard`.
 
 ## Model policy
 
-The only intended external LLM route remains:
+Only **Cloud.ru → DeepSeek-V4-Flash** is intended for Sayuri. Automatic LLM
+fallback remains disabled.
 
-- provider: **Cloud.ru**
-- model: **DeepSeek-V4-Flash**
-- automatic provider/model fallback: **disabled**
+## NEXT_ACTION
 
-The imported provider catalog is still present underneath and is not yet the
-authority for Sayuri.
+**Bridge an existing human approval decision into a one-shot Sayuri planned
+tool authorization before `executeTool` runs.**
 
-## Next stage
-
-1. Bind durable Sayuri sessions to the primary chat/turn lifecycle.
-2. Bridge existing approval UI responses into one-shot Sayuri authorizations.
-3. Wire Cloud.ru/DeepSeek-V4-Flash into the Model Gateway.
-4. Make workspace sandboxing default-on for Sayuri shell execution.
-5. Add project-scoped goal recovery and unfinished-task resume.
-
-Mass renaming of imported Letta internals remains deferred. We keep replacing
-authority boundaries first, then branding and compatibility layers later.
+This is the single safe next step. After it is tested, the Sayuri controller can
+be attached to live mutating turns without bypassing or duplicating the current
+approval UI.

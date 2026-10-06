@@ -6,5 +6,6 @@ export * from "./module-versions";
 export * from "./planner";
 export * from "./result-verifier";
 export * from "./state-store";
+export * from "./turn-context";
 export * from "./task-lifecycle";
 export * from "./version";

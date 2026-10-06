@@ -14,7 +14,7 @@ import { ACTING_USER_ID_ENV, ACTING_USER_ID_HEADER } from "@/agent/acting-user";
 import type { SkillSource } from "@/agent/skill-sources";
 import { type Backend, getBackend } from "@/backend";
 import { takePendingDiskSpaceReminder } from "@/reminders/disk-space";
-import { getRuntimeContext } from "@/runtime-context";
+import { getRuntimeContext, type RuntimeContextSnapshot } from "@/runtime-context";
 import { trackBoundaryError } from "@/telemetry/error-reporting";
 import {
   type ClientTool,
@@ -245,6 +245,8 @@ export type SendMessageStreamOptions = {
   /** Per-conversation permission mode state. When provided, tool execution uses
    *  this scoped state instead of the global permissionMode singleton. */
   permissionModeState?: PermissionModeState;
+  /** Extra turn-scoped runtime state captured with the tool snapshot. */
+  runtimeContext?: Partial<RuntimeContextSnapshot>;
   /** Per-request skill sources. An empty array disables client skills. */
   skillSources?: SkillSource[];
   /**
@@ -422,6 +424,11 @@ export async function sendMessageStreamWithBackend(
         return await prepareCurrentToolExecutionContext({
           workingDirectory: opts.workingDirectory,
           permissionModeState: opts.permissionModeState,
+          runtimeContext: {
+            ...(opts.runtimeContext ?? {}),
+            conversationId,
+            ...(opts.agentId ? { agentId: opts.agentId } : {}),
+          },
         });
       })();
   const { clientTools, contextId } = preparedToolContext;
