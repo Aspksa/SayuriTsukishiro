@@ -1,13 +1,13 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.81",
-  "milestone": "Background Work Supervisor",
+  "version": "0.1.82",
+  "milestone": "Cron/Background Admission Control",
   "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "background-work-supervisor",
-  "next_action": "Add Cron/Background Admission Control: scheduled triggers may create work intents, but must enter through project goal/task recovery, single-active-task arbitration, capability leases, and Action Broker; no cron callback may directly execute mutations."
+  "current_stage": "cron-background-admission-control",
+  "next_action": "Add the WebSocket Cognitive Control Plane: expose read-only project/task/plan/background/cron-intent state to the UI, route explicit user confirmations and cancellations through typed commands, and forbid WebSocket clients from directly setting lifecycle, approval, receipt, or goal-completion state."
 }

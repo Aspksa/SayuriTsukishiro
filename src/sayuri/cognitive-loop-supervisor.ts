@@ -1,5 +1,10 @@
 import type { LocalPiModelsRuntime } from "@/backend/dev/pi-models-runtime";
 import {
+  admitNextSayuriCronIntent,
+  FileSayuriCronIntentStore,
+  type SayuriCronIntentStore,
+} from "./cron-intent";
+import {
   FileSayuriBackgroundLeaseStore,
   type SayuriBackgroundLeaseStore,
 } from "./background-lease";
@@ -202,6 +207,7 @@ export async function superviseSayuriProject(input: {
   goalStore?: SayuriGoalStore;
   goalEvidenceStore?: SayuriGoalEvidenceStore;
   backgroundLeaseStore?: SayuriBackgroundLeaseStore;
+  cronIntentStore?: SayuriCronIntentStore;
   modelsRuntime?: LocalPiModelsRuntime;
   now?: string;
   taskIdFactory?: () => string;
@@ -213,6 +219,15 @@ export async function superviseSayuriProject(input: {
     input.goalEvidenceStore ?? new FileSayuriGoalEvidenceStore();
   const backgroundLeaseStore =
     input.backgroundLeaseStore ?? new FileSayuriBackgroundLeaseStore();
+  const cronIntentStore = input.cronIntentStore ?? new FileSayuriCronIntentStore();
+
+  await admitNextSayuriCronIntent({
+    projectId: input.projectId,
+    intentStore: cronIntentStore,
+    goalStore,
+    taskRegistry,
+    ...(input.now ? { now: input.now } : {}),
+  });
 
   const unfinished = (await taskRegistry.listProjectTasks(input.projectId)).filter(
     (task) => isUnfinishedSayuriTaskStatus(task.status),

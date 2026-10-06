@@ -85,6 +85,7 @@ import {
   shouldPersistSessionState,
 } from "./settings-manager";
 import { startStartupAutoUpdateCheck } from "./startup-auto-update";
+import { installSayuriCronAdmission } from "./sayuri/cron-intent";
 import {
   clearPersistedClientToolRules,
   loadStartupTools,
@@ -570,6 +571,7 @@ async function getLocalBackendStartupFallbackSession(
 
 async function main(): Promise<void> {
   markMilestone("CLI_START");
+  installSayuriCronAdmission();
   await initializeDesktopCredentials();
 
   // Exit when the owning Desktop or terminal process dies.
