@@ -23,6 +23,8 @@ import type {
   RuntimeExternalToolsUpdateResponseMessage,
   RuntimeStartCommand,
   RuntimeStartResponseMessage,
+  SayuriCancelCommand,
+  SayuriCancelResponse,
   SayuriStateGetCommand,
   SayuriStateGetResponse,
   SayuriStateSubscribeCommand,
@@ -30,6 +32,8 @@ import type {
   SayuriStateUnsubscribeCommand,
   SayuriStateUnsubscribeResponse,
   SayuriStateUpdateMessage,
+  SayuriTaskConfirmCommand,
+  SayuriTaskConfirmResponse,
   SyncCommand,
   SyncResponseMessage,
   WsProtocolCommand,
@@ -473,6 +477,53 @@ export class AppServerClient {
       {
         ...options,
         predicate: isAppServerInfoResponseMessage,
+      },
+    );
+  }
+
+  confirmSayuriTask(
+    command: Omit<SayuriTaskConfirmCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriTaskConfirmResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriTaskConfirmResponse> {
+    return this.request(
+      {
+        type: "sayuri_task_confirm",
+        ...command,
+        request_id:
+          command.request_id ?? this.nextRequestId("sayuri-task-confirm"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriTaskConfirmResponse =>
+          message.type === "sayuri_task_confirm_response",
+      },
+    );
+  }
+
+  cancelSayuri(
+    command: Omit<SayuriCancelCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriCancelResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriCancelResponse> {
+    return this.request(
+      {
+        type: "sayuri_cancel",
+        ...command,
+        request_id: command.request_id ?? this.nextRequestId("sayuri-cancel"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriCancelResponse =>
+          message.type === "sayuri_cancel_response",
       },
     );
   }

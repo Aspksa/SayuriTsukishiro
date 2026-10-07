@@ -33,3 +33,4 @@ export * from "./version";
 export * from "./work-orchestrator";
 export * from "./workspace-sandbox";
 export * from "./state-events";
+export * from "./cognitive-state-client";

@@ -1,7 +1,7 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.84",
-  "milestone": "WebSocket Cognitive State Subscriptions",
+  "version": "0.1.85",
+  "milestone": "Cognitive Control Client Cache",
   "base_runtime": {
     "name": "Letta Code",
     "imported_version": "0.34.4"
@@ -11,8 +11,8 @@
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "websocket-cognitive-state-subscriptions",
-  "next_action": "Add the Cognitive Control UI projection/client cache: consume sayuri_state_subscribe/update, render active task/plan/background/cron state, and issue revision-guarded confirm/cancel commands.",
+  "current_stage": "cognitive-control-client-cache",
+  "next_action": "Add the Ink/TUI Cognitive Control panel that binds to SayuriCognitiveStateClient, shows active task/plan/background/cron state, and exposes only revision-guarded confirm/cancel actions.",
   "control_plane": {
     "state": "read-only snapshot",
     "mutations": [
@@ -33,5 +33,11 @@
       "cron intent store"
     ],
     "reconnect": "subscriptions reuse listener connection state and survive suspend/resume"
+  },
+  "control_client": {
+    "cache": "per-project sanitized snapshot cache",
+    "subscriptions": "local watchers share one remote subscription",
+    "mutations": "typed revision-guarded confirm and semantic cancel",
+    "cleanup": "reference-counted unsubscribe plus explicit close"
   }
 }

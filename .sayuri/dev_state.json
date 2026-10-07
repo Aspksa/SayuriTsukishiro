@@ -1,34 +1,20 @@
 {
   "blockers": [],
   "last_result": "PASS",
-  "next_action": "Add the Cognitive Control UI projection/client cache: consume sayuri_state_subscribe/update, render active task/plan/background/cron state, and issue revision-guarded confirm/cancel commands.",
+  "next_action": "Add the Ink/TUI Cognitive Control panel that binds to SayuriCognitiveStateClient, shows active task/plan/background/cron state, and exposes only revision-guarded confirm/cancel actions.",
   "project": "Sayuri Tsukishiro",
-  "project_version": "0.1.84",
+  "project_version": "0.1.85",
   "schema_version": 1,
-  "stage": "websocket-cognitive-state-subscriptions",
+  "stage": "cognitive-control-client-cache",
   "task": {
-    "id": "cognitive-state-subscriptions-v1",
-    "goal": "Stream sanitized durable cognitive state to connection-scoped project subscribers",
+    "id": "cognitive-control-client-cache-v1",
+    "goal": "Provide a reusable UI-facing cache over Sayuri cognitive state subscriptions",
     "owned_paths": [
-      "src/sayuri/state-events.ts",
-      "src/sayuri/state-events.test.ts",
-      "src/sayuri/task-registry.ts",
-      "src/sayuri/background-lease.ts",
-      "src/sayuri/cron-intent.ts",
-      "src/types/sayuri-control-protocol.ts",
-      "src/types/task-control-protocol.ts",
-      "src/websocket/listener/sayuri-control-protocol-inbound.ts",
-      "src/websocket/listener/sayuri-control-protocol-inbound.test.ts",
-      "src/websocket/listener/sayuri-control-subscriptions.ts",
-      "src/websocket/listener/sayuri-control-subscriptions.test.ts",
-      "src/websocket/listener/commands/sayuri-control.ts",
-      "src/websocket/listener/commands/task-control.ts",
-      "src/websocket/listener/message-router.ts",
-      "src/websocket/listener/process-services.ts",
-      "src/websocket/listener/types.ts",
-      "src/websocket/listener/protocol-outbound-routing.ts",
       "src/app-server-client.ts",
       "src/app-server-client.test.ts",
+      "src/sayuri/cognitive-state-client.ts",
+      "src/sayuri/cognitive-state-client.test.ts",
+      "src/sayuri/index.ts",
       "src/sayuri/version.ts",
       "src/sayuri/module-versions.ts",
       "SAYURI_PROJECT_STATE.json",
@@ -37,16 +23,14 @@
       ".sayuri/dev_index.json"
     ],
     "target_tests": [
-      "bun test src/sayuri/state-events.test.ts",
-      "bun test src/websocket/listener/sayuri-control-protocol-inbound.test.ts",
-      "bun test src/websocket/listener/sayuri-control-subscriptions.test.ts",
-      "bun test src/app-server-client.test.ts"
+      "bun test src/app-server-client.test.ts",
+      "bun test src/sayuri/cognitive-state-client.test.ts"
     ],
     "acceptance": [
-      "subscribe returns an initial sanitized snapshot",
-      "durable task/background/cron changes emit coalesced project updates",
-      "subscriptions survive listener suspend/resume",
-      "typed AppServerClient exposes subscription helpers"
+      "multiple local watchers share one remote project subscription",
+      "push updates fan out through a stable per-project cache",
+      "refresh updates the cache deterministically",
+      "confirm/cancel remain typed and revision guarded"
     ]
   },
   "release_gate": {
@@ -57,6 +41,7 @@
     "dev-fastpath-v1",
     "ci-regression-repair-v1",
     "cognitive-control-plane-v1",
-    "cognitive-state-subscriptions-v1"
+    "cognitive-state-subscriptions-v1",
+    "cognitive-control-client-cache-v1"
   ]
 }
