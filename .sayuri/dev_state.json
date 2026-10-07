@@ -1,0 +1,30 @@
+{
+  "blockers": [
+    "Current draft PR CI is red: source-file-size check and several platform/integration unit shards need separate repair before release."
+  ],
+  "last_result": "PASS",
+  "next_action": "Add the WebSocket Cognitive Control Plane using tools/dev.py recover, delta-only context, and targeted checks before the release gate.",
+  "project": "Sayuri Tsukishiro",
+  "project_version": "0.1.82",
+  "schema_version": 1,
+  "stage": "zero-latency-development-fast-path",
+  "task": {
+    "acceptance": [
+      "dev.py state/recover returns compact live context",
+      "dev.py check selects targeted checks from the current diff",
+      "dev.py finish refuses automatic commits on main and stages only task-owned paths",
+      "repository index can be regenerated deterministically"
+    ],
+    "goal": "Install the zero-latency development fast path",
+    "id": "dev-fastpath-v1",
+    "owned_paths": [
+      ".sayuri/**",
+      "tools/dev.py",
+      "tools/test_dev.py",
+      "docs/ai/SAYURI_ZERO_LATENCY_PROTOCOL.md"
+    ],
+    "target_tests": [
+      "python -m unittest tools.test_dev"
+    ]
+  }
+}
