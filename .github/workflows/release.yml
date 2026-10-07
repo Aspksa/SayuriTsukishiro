@@ -11,7 +11,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'letta-ai/letta-code' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     outputs:
       should_publish: ${{ steps.detect.outputs.should_publish }}
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}

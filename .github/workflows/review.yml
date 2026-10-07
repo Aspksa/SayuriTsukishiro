@@ -16,10 +16,11 @@ jobs:
     # maintainer approves the Actions run. Use workflow_dispatch to explicitly
     # review an external PR after approval.
     if: >
-      (github.event_name == 'workflow_dispatch') ||
+      github.repository == 'letta-ai/letta-code' &&
+      ((github.event_name == 'workflow_dispatch') ||
       (github.event.pull_request.draft == false &&
        github.actor != 'dependabot[bot]' &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+       github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     permissions:
       contents: read
