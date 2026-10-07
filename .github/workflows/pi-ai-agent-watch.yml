@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   watch:
+    if: github.repository == 'letta-ai/letta-code'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
