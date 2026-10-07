@@ -1,7 +1,5 @@
 {
-  "blockers": [
-    "Current draft PR CI is red: source-file-size check and several platform/integration unit shards need separate repair before release."
-  ],
+  "blockers": [],
   "last_result": "PASS",
   "next_action": "Add the WebSocket Cognitive Control Plane using tools/dev.py recover, delta-only context, and targeted checks before the release gate.",
   "project": "Sayuri Tsukishiro",
@@ -26,5 +24,18 @@
     "target_tests": [
       "python -m unittest tools.test_dev"
     ]
-  }
+  },
+  "release_gate": {
+    "status": "pending_ci",
+    "repairs": [
+      "source-file-size baseline restored without behavior change",
+      "Windows workspace-sandbox path expectation aligned with production resolve() semantics",
+      "launch-subagent integration test explicitly opts into unrestricted mode instead of depending on the old global default"
+    ],
+    "validation_head": "pending"
+  },
+  "completed_tasks": [
+    "dev-fastpath-v1",
+    "ci-regression-repair-v1"
+  ]
 }

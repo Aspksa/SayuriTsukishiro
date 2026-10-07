@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { createSayuriExecutionController } from "./execution-control";
@@ -28,10 +28,10 @@ describe("Sayuri workspace sandbox policy", () => {
         reason: "test backend",
       });
       expect(result.sandbox?.root).toBe(
-        (await realpath(scopeRoot)).replaceAll("\\", "/"),
+        resolve(scopeRoot).replaceAll("\\", "/"),
       );
       expect(result.sandbox?.isolationRoot).toBe(
-        (await realpath(dirname(scopeRoot))).replaceAll("\\", "/"),
+        dirname(resolve(scopeRoot)).replaceAll("\\", "/"),
       );
     } finally {
       await rm(isolationRoot, { recursive: true, force: true });

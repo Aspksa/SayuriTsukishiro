@@ -2548,7 +2548,6 @@ describe("listen-client multi-worker concurrency", () => {
     } finally {
       globalThis.setTimeout = originalSetTimeout;
     }
-
     expect(retrieveRunMock).toHaveBeenCalledTimes(3);
     expect(retrieveRunMock.mock.calls.map((call) => call[0])).toEqual(
       Array(3).fill(blockingRunId),
