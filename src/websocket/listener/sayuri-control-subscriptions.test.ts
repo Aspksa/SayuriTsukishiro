@@ -47,9 +47,9 @@ describe("Sayuri project state subscriptions", () => {
       true,
     );
     const key = sayuriProjectSubscriptionKey("project-a");
-    expect(runtime.connectionIdsByRuntimeKey.get(key)?.has("connection-1")).toBe(
-      true,
-    );
+    expect(
+      runtime.connectionIdsByRuntimeKey.get(key)?.has("connection-1"),
+    ).toBe(true);
 
     suspendListenerConnection(runtime, "connection-1");
     openListenerConnection({
@@ -59,13 +59,13 @@ describe("Sayuri project state subscriptions", () => {
       options: options(),
     });
     markListenerConnectionInitialized(runtime, "connection-1");
-    expect(runtime.connectionIdsByRuntimeKey.get(key)?.has("connection-1")).toBe(
+    expect(
+      runtime.connectionIdsByRuntimeKey.get(key)?.has("connection-1"),
+    ).toBe(true);
+
+    expect(unsubscribeSayuriProject(runtime, "connection-1", "project-a")).toBe(
       true,
     );
-
-    expect(
-      unsubscribeSayuriProject(runtime, "connection-1", "project-a"),
-    ).toBe(true);
     expect(runtime.connectionIdsByRuntimeKey.has(key)).toBe(false);
   });
 });

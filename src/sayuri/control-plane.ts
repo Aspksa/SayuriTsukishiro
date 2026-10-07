@@ -16,10 +16,7 @@ import {
   type SayuriBrainStateSnapshot,
   type SayuriBrainStateStore,
 } from "./state-store";
-import {
-  type SayuriTaskState,
-  transitionSayuriTask,
-} from "./task-lifecycle";
+import { type SayuriTaskState, transitionSayuriTask } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
@@ -147,8 +144,8 @@ export async function getSayuriCognitiveControlSnapshot(
   const requestedTaskId = input.taskId?.trim();
   const selectedEntry = requestedTaskId
     ? tasks.find((task) => task.taskId === requestedTaskId)
-    : (tasks.find((task) =>
-        !["completed", "failed", "cancelled"].includes(task.status),
+    : (tasks.find(
+        (task) => !["completed", "failed", "cancelled"].includes(task.status),
       ) ?? tasks[0]);
 
   if (requestedTaskId && !selectedEntry) {
