@@ -3,31 +3,34 @@
   "last_result": "PASS",
   "next_action": "Bind SayuriCognitiveControlPanel into the first runtime surface that owns both an AppServerClient and an explicit Sayuri projectId; do not infer project identity from cwd or conversation IDs.",
   "project": "Sayuri Tsukishiro",
-  "project_version": "0.1.86",
+  "project_version": "0.1.87",
   "schema_version": 1,
-  "stage": "ink-cognitive-control-panel",
+  "stage": "foundation-upstream-automation-isolation",
   "task": {
-    "id": "ink-cognitive-control-panel-v1",
-    "goal": "Render live Sayuri cognitive state in a reusable Ink panel with only safe semantic actions",
+    "id": "foundation-upstream-automation-isolation-v1",
+    "goal": "Prevent imported Letta release, cross-repository sync, and external-agent workflows from gaining authority in Sayuri",
     "owned_paths": [
-      "src/cli/components/SayuriCognitiveControlPanel.tsx",
-      "src/cli/components/SayuriCognitiveControlPanel.test.ts",
+      ".github/workflows/release.yml",
+      ".github/workflows/release-cascade.yml",
+      ".github/workflows/prepare-release.yml",
+      ".github/workflows/sync-tools-to-cloud.yml",
+      ".github/workflows/letta.yml",
+      ".github/workflows/review.yml",
       "src/sayuri/version.ts",
-      "src/sayuri/module-versions.ts",
       "SAYURI_PROJECT_STATE.json",
       "SAYURI_PROJECT_STATE.md",
-      ".sayuri/dev_state.json",
-      ".sayuri/dev_index.json"
+      ".sayuri/dev_state.json"
     ],
     "target_tests": [
-      "bun test src/cli/components/SayuriCognitiveControlPanel.test.ts"
+      "GitHub Actions workflow parse/PR checks",
+      "bun run check"
     ],
     "acceptance": [
-      "panel projects task/plan/background/cron state",
-      "confirm is offered only for waiting-user",
-      "cancel is offered only for nonterminal task",
-      "actions use the displayed task revision",
-      "panel requires explicit projectId and client"
+      "upstream publish and release cascade jobs skip outside letta-ai/letta-code",
+      "upstream cross-repository sync skips outside letta-ai/letta-code",
+      "imported external agent actions skip outside letta-ai/letta-code",
+      "normal Sayuri CI remains enabled",
+      "project handoff records v0.1.87 and preserves the safe UI next_action"
     ]
   },
   "release_gate": {
@@ -40,6 +43,7 @@
     "cognitive-control-plane-v1",
     "cognitive-state-subscriptions-v1",
     "cognitive-control-client-cache-v1",
-    "ink-cognitive-control-panel-v1"
+    "ink-cognitive-control-panel-v1",
+    "foundation-upstream-automation-isolation-v1"
   ]
 }
