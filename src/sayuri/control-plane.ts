@@ -1,4 +1,3 @@
-import type { SayuriPlan } from "./planner";
 import {
   FileSayuriBackgroundLeaseStore,
   type SayuriBackgroundLeaseRecord,
@@ -11,15 +10,13 @@ import {
   type SayuriCronIntentStore,
   type SayuriCronWorkIntent,
 } from "./cron-intent";
+import type { SayuriPlan } from "./planner";
 import {
   FileSayuriBrainStateStore,
   type SayuriBrainStateSnapshot,
   type SayuriBrainStateStore,
 } from "./state-store";
-import {
-  transitionSayuriTask,
-  type SayuriTaskState,
-} from "./task-lifecycle";
+import { transitionSayuriTask, type SayuriTaskState } from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,
@@ -91,10 +88,7 @@ async function loadIndexedTask(input: {
   snapshot: SayuriBrainStateSnapshot;
   indexedStore: ProjectIndexedSayuriBrainStateStore;
 }> {
-  const entry = await input.taskRegistry.getTask(
-    input.projectId,
-    input.taskId,
-  );
+  const entry = await input.taskRegistry.getTask(input.projectId, input.taskId);
   if (!entry) {
     throw new Error(
       `Sayuri task "${input.taskId}" was not found in project "${input.projectId}".`,
@@ -150,8 +144,9 @@ export async function getSayuriCognitiveControlSnapshot(
   const requestedTaskId = input.taskId?.trim();
   const selectedEntry = requestedTaskId
     ? tasks.find((task) => task.taskId === requestedTaskId)
-    : tasks.find((task) => !["completed", "failed", "cancelled"].includes(task.status)) ??
-      tasks[0];
+    : (tasks.find((task) =>
+        !["completed", "failed", "cancelled"].includes(task.status),
+      ) ?? tasks[0]);
 
   if (requestedTaskId && !selectedEntry) {
     throw new Error(

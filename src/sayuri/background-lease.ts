@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { withFileLock } from "@/utils/file-lock";
-import { publishSayuriProjectStateChanged } from "./state-events";
 import type { SayuriEvidenceReceipt } from "./evidence-ledger";
+import { publishSayuriProjectStateChanged } from "./state-events";
 import { resolveSayuriStateRoot } from "./state-store";
 import {
   type SayuriSubagentCapabilityLease,

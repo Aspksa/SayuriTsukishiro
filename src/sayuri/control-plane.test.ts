@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { FileSayuriBackgroundLeaseStore } from "./background-lease";
 import {
   cancelSayuriControlTarget,
   confirmSayuriWaitingTask,
@@ -12,7 +13,6 @@ import {
   type SayuriCronWorkIntent,
 } from "./cron-intent";
 import type { SayuriPlan } from "./planner";
-import { FileSayuriBackgroundLeaseStore } from "./background-lease";
 import { FileSayuriBrainStateStore } from "./state-store";
 import { createSayuriTask, transitionSayuriTask } from "./task-lifecycle";
 import {

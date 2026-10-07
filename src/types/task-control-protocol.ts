@@ -1,8 +1,8 @@
+import type { AgentRuntimeScope } from "./runtime-scope";
 import type {
   SayuriControlCommand,
   SayuriControlResponseMessage,
 } from "./sayuri-control-protocol";
-import type { AgentRuntimeScope } from "./runtime-scope";
 
 /** Run a slash command in an agent conversation. */
 export interface ExecuteCommandCommand {

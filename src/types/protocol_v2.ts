@@ -71,10 +71,10 @@ import type * as SubagentProtocol from "./subagent-protocol";
 import type {
   ExecuteCommandCommand,
   ExecuteCommandResponseMessage,
-  TaskControlCommand,
-  TaskControlResponse,
   RemoveQueueItemCommand,
   RemoveQueueItemResponse,
+  TaskControlCommand,
+  TaskControlResponse,
 } from "./task-control-protocol";
 
 export type * from "./subagent-protocol";
