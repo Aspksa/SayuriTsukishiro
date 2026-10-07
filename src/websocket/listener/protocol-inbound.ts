@@ -1901,11 +1901,10 @@ export function isSecretApplyCommand(
   return true;
 }
 
-import { isSayuriControlCommand } from "./sayuri-control-protocol-inbound";
 import { isLaunchSubagentCommand } from "./subagent-protocol-inbound";
 import {
   isExecuteCommandCommand,
-  isMonitorStopCommand,
+  isTaskControlCommand,
   isRemoveQueueItemCommand,
 } from "./task-control-protocol-inbound";
 
@@ -2038,8 +2037,7 @@ export function parseServerMessage(
       isChannelRouteRemoveCommand(parsed) ||
       isExecuteCommandCommand(parsed) ||
       isRemoveQueueItemCommand(parsed) ||
-      isMonitorStopCommand(parsed) ||
-      isSayuriControlCommand(parsed) ||
+      isTaskControlCommand(parsed) ||
       isLaunchSubagentCommand(parsed) ||
       isSearchBranchesCommand(parsed) ||
       isCheckoutBranchCommand(parsed) ||

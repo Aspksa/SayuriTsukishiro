@@ -278,7 +278,13 @@ export function createListenerMessageHandler(
         return;
       }
 
-      if (parsed.type === "launch_subagent" || parsed.type === "monitor_stop") {
+      if (
+        parsed.type === "launch_subagent" ||
+        parsed.type === "monitor_stop" ||
+        parsed.type === "sayuri_state_get" ||
+        parsed.type === "sayuri_task_confirm" ||
+        parsed.type === "sayuri_cancel"
+      ) {
         const { handleTaskControlCommand } = await import(
           "./commands/task-control"
         );
@@ -290,18 +296,6 @@ export function createListenerMessageHandler(
           runDetachedListenerTask,
           safeSocketSend,
         });
-        return;
-      }
-
-      if (
-        parsed.type === "sayuri_state_get" ||
-        parsed.type === "sayuri_task_confirm" ||
-        parsed.type === "sayuri_cancel"
-      ) {
-        const { handleSayuriControlCommand } = await import(
-          "./commands/sayuri-control"
-        );
-        await handleSayuriControlCommand(parsed, { socket, safeSocketSend });
         return;
       }
 

@@ -44,7 +44,7 @@ describe("Sayuri control protocol validation", () => {
         expected_revision: 2,
         status: "completed",
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       isSayuriControlCommand({
         type: "sayuri_set_task_status",

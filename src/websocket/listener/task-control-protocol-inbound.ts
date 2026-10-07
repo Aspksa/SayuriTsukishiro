@@ -1,9 +1,11 @@
+import type { SayuriControlCommand } from "@/types/sayuri-control-protocol";
 import type {
   ExecuteCommandCommand,
   MonitorStopCommand,
   RemoveQueueItemCommand,
 } from "@/types/task-control-protocol";
 import { isAgentRuntimeScope } from "./protocol-validation";
+import { isSayuriControlCommand } from "./sayuri-control-protocol-inbound";
 
 export function isExecuteCommandCommand(
   value: unknown,
@@ -49,4 +51,10 @@ export function isMonitorStopCommand(
     typeof c.process_id === "string" &&
     c.process_id.length > 0
   );
+}
+
+export function isTaskControlCommand(
+  value: unknown,
+): value is MonitorStopCommand | SayuriControlCommand {
+  return isMonitorStopCommand(value) || isSayuriControlCommand(value);
 }
