@@ -27,7 +27,10 @@ describe("Sayuri workspace sandbox policy", () => {
         backend: "seatbelt",
         reason: "test backend",
       });
-      const canonicalScopeRoot = (await realpath(scopeRoot)).replaceAll("\\", "/");
+      const canonicalScopeRoot = (await realpath(scopeRoot)).replaceAll(
+        "\\",
+        "/",
+      );
       expect(result.sandbox?.root).toBe(canonicalScopeRoot);
       expect(result.sandbox?.isolationRoot).toBe(dirname(canonicalScopeRoot));
     } finally {
