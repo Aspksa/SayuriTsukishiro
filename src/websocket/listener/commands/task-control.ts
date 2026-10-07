@@ -2,6 +2,7 @@ import type WebSocket from "ws";
 import type { LaunchSubagentCommand } from "@/types/subagent-protocol";
 import type { TaskControlCommand } from "@/types/task-control-protocol";
 import type { ListenerRuntime } from "@/websocket/listener/types";
+import { isSayuriControlCommand } from "../sayuri-control-protocol-inbound";
 import { handleMonitorStopCommand } from "./monitors";
 import { handleLaunchSubagentCommand } from "./subagents";
 import type {
@@ -30,13 +31,14 @@ export async function handleTaskControlCommand(
     safeSocketSend,
   } = context;
   const execute = async () => {
-    if (
-      command.type === "sayuri_state_get" ||
-      command.type === "sayuri_task_confirm" ||
-      command.type === "sayuri_cancel"
-    ) {
+    if (isSayuriControlCommand(command)) {
       const { handleSayuriControlCommand } = await import("./sayuri-control");
-      await handleSayuriControlCommand(command, { socket, safeSocketSend });
+      await handleSayuriControlCommand(command, {
+        runtime,
+        socket,
+        connectionId,
+        safeSocketSend,
+      });
       return;
     }
     const response =

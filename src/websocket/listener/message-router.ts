@@ -53,6 +53,7 @@ import {
   enqueueInboundUserMessage,
   getInboundClientMessageId,
 } from "./inbound-queue";
+import { isTaskControlCommand } from "./task-control-protocol-inbound";
 import {
   isExecuteCommandCommand,
   parseServerLifecycleMessage,
@@ -280,10 +281,7 @@ export function createListenerMessageHandler(
 
       if (
         parsed.type === "launch_subagent" ||
-        parsed.type === "monitor_stop" ||
-        parsed.type === "sayuri_state_get" ||
-        parsed.type === "sayuri_task_confirm" ||
-        parsed.type === "sayuri_cancel"
+        isTaskControlCommand(parsed)
       ) {
         const { handleTaskControlCommand } = await import(
           "./commands/task-control"

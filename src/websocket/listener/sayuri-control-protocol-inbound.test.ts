@@ -3,15 +3,31 @@ import {
   isSayuriCancelCommand,
   isSayuriControlCommand,
   isSayuriStateGetCommand,
+  isSayuriStateSubscribeCommand,
+  isSayuriStateUnsubscribeCommand,
   isSayuriTaskConfirmCommand,
 } from "./sayuri-control-protocol-inbound";
 
 describe("Sayuri control protocol validation", () => {
-  test("accepts the three explicit cognitive-control commands", () => {
+  test("accepts the explicit cognitive-control commands", () => {
     expect(
       isSayuriStateGetCommand({
         type: "sayuri_state_get",
         request_id: "r1",
+        project_id: "p1",
+      }),
+    ).toBe(true);
+    expect(
+      isSayuriStateSubscribeCommand({
+        type: "sayuri_state_subscribe",
+        request_id: "r1s",
+        project_id: "p1",
+      }),
+    ).toBe(true);
+    expect(
+      isSayuriStateUnsubscribeCommand({
+        type: "sayuri_state_unsubscribe",
+        request_id: "r1u",
         project_id: "p1",
       }),
     ).toBe(true);

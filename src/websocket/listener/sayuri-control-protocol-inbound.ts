@@ -2,6 +2,8 @@ import type {
   SayuriCancelCommand,
   SayuriControlCommand,
   SayuriStateGetCommand,
+  SayuriStateSubscribeCommand,
+  SayuriStateUnsubscribeCommand,
   SayuriTaskConfirmCommand,
 } from "@/types/sayuri-control-protocol";
 
@@ -38,6 +40,32 @@ export function isSayuriStateGetCommand(
       nonEmpty(command.request_id) &&
       nonEmpty(command.project_id) &&
       (command.task_id === undefined || nonEmpty(command.task_id)),
+  );
+}
+
+export function isSayuriStateSubscribeCommand(
+  value: unknown,
+): value is SayuriStateSubscribeCommand {
+  const command = record(value);
+  return Boolean(
+    command &&
+      onlyKeys(command, ["type", "request_id", "project_id"]) &&
+      command.type === "sayuri_state_subscribe" &&
+      nonEmpty(command.request_id) &&
+      nonEmpty(command.project_id),
+  );
+}
+
+export function isSayuriStateUnsubscribeCommand(
+  value: unknown,
+): value is SayuriStateUnsubscribeCommand {
+  const command = record(value);
+  return Boolean(
+    command &&
+      onlyKeys(command, ["type", "request_id", "project_id"]) &&
+      command.type === "sayuri_state_unsubscribe" &&
+      nonEmpty(command.request_id) &&
+      nonEmpty(command.project_id),
   );
 }
 
@@ -98,6 +126,8 @@ export function isSayuriControlCommand(
 ): value is SayuriControlCommand {
   return (
     isSayuriStateGetCommand(value) ||
+    isSayuriStateSubscribeCommand(value) ||
+    isSayuriStateUnsubscribeCommand(value) ||
     isSayuriTaskConfirmCommand(value) ||
     isSayuriCancelCommand(value)
   );

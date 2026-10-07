@@ -12,6 +12,7 @@ const STREAM_CHANNEL_MESSAGE_TYPES: ReadonlySet<string> = new Set([
   "update_loop_status",
   "update_queue",
   "update_subagent_state",
+  "sayuri_state_update",
 ]);
 
 export function isStreamChannelMessage(type: string): boolean {

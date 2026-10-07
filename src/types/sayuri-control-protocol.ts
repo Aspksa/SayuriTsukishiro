@@ -1,6 +1,4 @@
-import type {
-  SayuriCognitiveControlSnapshot,
-} from "../sayuri/control-plane";
+import type { SayuriCognitiveControlSnapshot } from "../sayuri/control-plane";
 import type { SayuriTaskState } from "../sayuri/task-lifecycle";
 
 export interface SayuriStateGetCommand {
@@ -16,6 +14,43 @@ export interface SayuriStateGetResponse {
   success: boolean;
   snapshot?: SayuriCognitiveControlSnapshot;
   error?: string;
+}
+
+export interface SayuriStateSubscribeCommand {
+  type: "sayuri_state_subscribe";
+  request_id: string;
+  project_id: string;
+}
+
+export interface SayuriStateSubscribeResponse {
+  type: "sayuri_state_subscribe_response";
+  request_id: string;
+  success: boolean;
+  snapshot?: SayuriCognitiveControlSnapshot;
+  error?: string;
+}
+
+export interface SayuriStateUnsubscribeCommand {
+  type: "sayuri_state_unsubscribe";
+  request_id: string;
+  project_id: string;
+}
+
+export interface SayuriStateUnsubscribeResponse {
+  type: "sayuri_state_unsubscribe_response";
+  request_id: string;
+  success: boolean;
+  unsubscribed: boolean;
+  error?: string;
+}
+
+export interface SayuriStateUpdateMessage {
+  type: "sayuri_state_update";
+  project_id: string;
+  snapshot: SayuriCognitiveControlSnapshot;
+  event_seq: number;
+  emitted_at: string;
+  idempotency_key: string;
 }
 
 export interface SayuriTaskConfirmCommand {
@@ -70,10 +105,15 @@ export interface SayuriCancelResponse {
 
 export type SayuriControlCommand =
   | SayuriStateGetCommand
+  | SayuriStateSubscribeCommand
+  | SayuriStateUnsubscribeCommand
   | SayuriTaskConfirmCommand
   | SayuriCancelCommand;
 
 export type SayuriControlResponseMessage =
   | SayuriStateGetResponse
+  | SayuriStateSubscribeResponse
+  | SayuriStateUnsubscribeResponse
+  | SayuriStateUpdateMessage
   | SayuriTaskConfirmResponse
   | SayuriCancelResponse;
