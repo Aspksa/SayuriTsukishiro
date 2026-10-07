@@ -107,9 +107,10 @@ export function SayuriCognitiveControlPanel({
   maxItems = 3,
   onError,
 }: SayuriCognitiveControlPanelProps) {
-  const [snapshot, setSnapshot] = useState<SayuriCognitiveControlSnapshot | null>(
-    () => client.getSnapshot(projectId),
-  );
+  const [snapshot, setSnapshot] =
+    useState<SayuriCognitiveControlSnapshot | null>(() =>
+      client.getSnapshot(projectId),
+    );
   const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState<"confirm" | "cancel" | null>(null);
 
@@ -142,7 +143,8 @@ export function SayuriCognitiveControlPanel({
   }, [client, onError, projectId]);
 
   const view = useMemo(
-    () => (snapshot ? buildSayuriCognitiveControlView(snapshot, maxItems) : null),
+    () =>
+      snapshot ? buildSayuriCognitiveControlView(snapshot, maxItems) : null,
     [maxItems, snapshot],
   );
 
@@ -222,7 +224,8 @@ export function SayuriCognitiveControlPanel({
           <Text bold>Plan</Text>
           {view.planSteps.map((step) => (
             <Text key={step.id}>
-              {stepGlyph(step.status)} {step.title} <Text dimColor>[{step.status}]</Text>
+              {stepGlyph(step.status)} {step.title}{" "}
+              <Text dimColor>[{step.status}]</Text>
             </Text>
           ))}
         </Box>
@@ -252,10 +255,14 @@ export function SayuriCognitiveControlPanel({
       {focused && view?.task && (
         <Box marginTop={1}>
           {view.canConfirm && (
-            <Text color="green">{busy === "confirm" ? "Confirming…" : "[c] confirm"} </Text>
+            <Text color="green">
+              {busy === "confirm" ? "Confirming…" : "[c] confirm"}{" "}
+            </Text>
           )}
           {view.canCancel && (
-            <Text color="yellow">{busy === "cancel" ? "Cancelling…" : "[x] cancel"}</Text>
+            <Text color="yellow">
+              {busy === "cancel" ? "Cancelling…" : "[x] cancel"}
+            </Text>
           )}
         </Box>
       )}

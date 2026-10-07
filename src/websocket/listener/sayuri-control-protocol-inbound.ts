@@ -116,7 +116,9 @@ export function isSayuriCancelCommand(
     return onlyKeys(target, ["kind", "lease_id"]) && nonEmpty(target.lease_id);
   }
   if (target.kind === "cron-intent") {
-    return onlyKeys(target, ["kind", "intent_id"]) && nonEmpty(target.intent_id);
+    return (
+      onlyKeys(target, ["kind", "intent_id"]) && nonEmpty(target.intent_id)
+    );
   }
   return false;
 }

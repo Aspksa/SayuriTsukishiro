@@ -56,7 +56,6 @@ describe("Sayuri subagent capability leases", () => {
     ).not.toThrow();
   });
 
-
   test("creation validates expiry relative to the explicit issuedAt timestamp", () => {
     const lease = createSayuriSubagentCapabilityLease({
       id: "lease-historical-fixture",

@@ -1,7 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import type {
-  SayuriStateUpdateMessage,
-} from "@/types/sayuri-control-protocol";
+import type { SayuriStateUpdateMessage } from "@/types/sayuri-control-protocol";
 import {
   SayuriCognitiveStateClient,
   type SayuriCognitiveStateTransport,

@@ -43,9 +43,9 @@ describe("Sayuri project state subscriptions", () => {
     });
     markListenerConnectionInitialized(runtime, "connection-1");
 
-    expect(
-      subscribeSayuriProject(runtime, "connection-1", "project-a"),
-    ).toBe(true);
+    expect(subscribeSayuriProject(runtime, "connection-1", "project-a")).toBe(
+      true,
+    );
     const key = sayuriProjectSubscriptionKey("project-a");
     expect(runtime.connectionIdsByRuntimeKey.get(key)?.has("connection-1")).toBe(
       true,

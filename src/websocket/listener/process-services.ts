@@ -15,8 +15,8 @@ import {
   emitSubagentStateIfOpen,
 } from "./protocol-outbound";
 import { scheduleQueuePump } from "./queue";
-import { installSayuriProjectStateEventRouting } from "./sayuri-control-subscriptions";
 import { clearRuntimeTimers, getActiveRuntime } from "./runtime";
+import { installSayuriProjectStateEventRouting } from "./sayuri-control-subscriptions";
 import type { ListenerTransport } from "./transport";
 import { isListenerTransportOpen } from "./transport";
 import type {

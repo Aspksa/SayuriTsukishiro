@@ -221,10 +221,5 @@ export async function handleSayuriControlCommand(
           : command.type === "sayuri_task_confirm"
             ? await confirmResponse(command)
             : await cancelResponse(command);
-  context.safeSocketSend(
-    context.socket,
-    response,
-    response.type,
-    command.type,
-  );
+  context.safeSocketSend(context.socket, response, response.type, command.type);
 }

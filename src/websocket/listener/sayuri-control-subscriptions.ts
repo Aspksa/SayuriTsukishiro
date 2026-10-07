@@ -130,15 +130,16 @@ export function scheduleSayuriProjectStateUpdate(
     state = { projects: new Set(), running: false };
     pendingByRuntime.set(runtime, state);
   }
-  state.projects.add(normalizedProjectId(projectId));
-  if (state.running) return;
-  state.running = true;
+  const pending = state;
+  pending.projects.add(normalizedProjectId(projectId));
+  if (pending.running) return;
+  pending.running = true;
   queueMicrotask(() => {
     void (async () => {
       try {
-        while (state!.projects.size > 0) {
-          const projects = [...state!.projects];
-          state!.projects.clear();
+        while (pending.projects.size > 0) {
+          const projects = [...pending.projects];
+          pending.projects.clear();
           for (const project of projects) {
             try {
               await emitSayuriProjectStateUpdate(runtime, project);
@@ -152,10 +153,7 @@ export function scheduleSayuriProjectStateUpdate(
           }
         }
       } finally {
-        state!.running = false;
-        if (state!.projects.size > 0) {
-          scheduleSayuriProjectStateUpdate(runtime, [...state!.projects][0]!);
-        }
+        pending.running = false;
       }
     })();
   });
