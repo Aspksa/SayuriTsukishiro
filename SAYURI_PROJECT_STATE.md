@@ -29,8 +29,14 @@ The cognitive-control stack stays at Cognitive Core 0.29.0. The reusable
 `SayuriCognitiveStateClient`; project identity must not be inferred from cwd,
 conversation IDs, or agent IDs.
 
+The package matrix also stays publish-free in Sayuri: normal pushes validate
+the npm artifact with `bun pm pack`; the imported `bun publish --dry-run`
+path is allowed only in the upstream `letta-ai/letta-code` repository.
+
 ## NEXT_ACTION
 
-**Bind `SayuriCognitiveControlPanel` into the first runtime surface that owns
-both an `AppServerClient` and an explicit Sayuri `projectId`; do not infer
-project identity from cwd or conversation IDs.**
+**Implement Draft Fast CI: keep lint/type, update-chain, and a focused Sayuri
+smoke during draft iteration; defer the full cross-platform matrix and wheel
+builds until Ready for review. After that, bind `SayuriCognitiveControlPanel`
+only where one runtime surface owns both an `AppServerClient` and an explicit
+Sayuri `projectId`.**
