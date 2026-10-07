@@ -1,7 +1,7 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.86",
-  "milestone": "Ink Cognitive Control Panel",
+  "version": "0.1.87",
+  "milestone": "Foundation Upstream Automation Isolation",
   "base_runtime": {
     "name": "Letta Code",
     "imported_version": "0.34.4"
@@ -11,8 +11,8 @@
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "ink-cognitive-control-panel",
-  "next_action": "Bind SayuriCognitiveControlPanel into the first runtime surface that owns both an AppServerClient and an explicit Sayuri projectId; do not infer project identity from cwd or conversation IDs.",
+  "current_stage": "foundation-upstream-automation-isolation",
+  "next_action": "Implement Draft Fast CI: keep lint/type/update-chain and a focused Sayuri smoke during draft iteration, defer full cross-platform matrix and wheel builds until Ready for review, then bind SayuriCognitiveControlPanel only on a runtime surface that owns both AppServerClient and an explicit Sayuri projectId.",
   "control_plane": {
     "state": "read-only snapshot",
     "mutations": [
@@ -54,5 +54,18 @@
       "x: nonterminal task cancellation"
     ],
     "authority": "semantic client methods only; no generic lifecycle setter"
+  },
+  "automation_hardening": {
+    "policy": "upstream write/publish automation must fail closed outside letta-ai/letta-code",
+    "guarded_workflows": [
+      "Publish release",
+      "Release Cascade",
+      "Prepare release",
+      "Sync Tools to letta-cloud",
+      "Letta Code agent action",
+      "Code Review Amelia action"
+    ],
+    "sayuri_behavior": "jobs skip before secrets, publication, cross-repository writes, or external agent actions",
+    "package_validation": "Sayuri push CI uses local pack only; imported npm publish dry-run remains upstream-only."
   }
 }

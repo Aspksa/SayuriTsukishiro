@@ -9,6 +9,7 @@ on:
 
 jobs:
   letta:
+    if: github.repository == 'letta-ai/letta-code'
     runs-on: ubuntu-latest
     permissions:
       contents: write
