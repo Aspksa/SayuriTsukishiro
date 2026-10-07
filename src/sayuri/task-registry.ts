@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { withFileLock } from "@/utils/file-lock";
+import { publishSayuriProjectStateChanged } from "./state-events";
 import type { SayuriPlan } from "./planner";
 import {
   resolveSayuriStateRoot,
@@ -210,6 +211,10 @@ export class FileSayuriTaskRegistry implements SayuriTaskRegistry {
       },
       { reapOnlyDeadOwner: true },
     );
+    publishSayuriProjectStateChanged({
+      projectId: entry.projectId,
+      source: "task",
+    });
   }
 
   async getTask(

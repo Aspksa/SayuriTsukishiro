@@ -32,3 +32,4 @@ export * from "./turn-context";
 export * from "./version";
 export * from "./work-orchestrator";
 export * from "./workspace-sandbox";
+export * from "./state-events";

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { ScheduledTaskAdmissionInput } from "@/cron/scheduled-admission";
 import { registerScheduledTaskAdmissionHandler } from "@/cron/scheduled-admission";
 import { withFileLock } from "@/utils/file-lock";
+import { publishSayuriProjectStateChanged } from "./state-events";
 import { FileSayuriGoalStore, type SayuriGoalStore } from "./goal-manager";
 import { resolveSayuriStateRoot } from "./state-store";
 import { isUnfinishedSayuriTaskStatus } from "./task-lifecycle";
@@ -220,6 +221,10 @@ export class FileSayuriCronIntentStore implements SayuriCronIntentStore {
       },
       { reapOnlyDeadOwner: true },
     );
+    publishSayuriProjectStateChanged({
+      projectId: intent.projectId,
+      source: "cron-intent",
+    });
   }
 
   async get(
