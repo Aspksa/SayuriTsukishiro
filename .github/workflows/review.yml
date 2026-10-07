@@ -289,10 +289,11 @@ jobs:
   # Slack connection, once per PR.
   system-prompt-drift-flag:
     if: >
-      (github.event_name == 'workflow_dispatch') ||
+      github.repository == 'letta-ai/letta-code' &&
+      ((github.event_name == 'workflow_dispatch') ||
       (github.event.pull_request.draft == false &&
        github.actor != 'dependabot[bot]' &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+       github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
