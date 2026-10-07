@@ -1,13 +1,30 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.82",
-  "milestone": "Cron/Background Admission Control",
-  "base_runtime": { "name": "Letta Code", "imported_version": "0.34.4" },
+  "version": "0.1.83",
+  "milestone": "WebSocket Cognitive Control Plane",
+  "base_runtime": {
+    "name": "Letta Code",
+    "imported_version": "0.34.4"
+  },
   "model_policy": {
     "provider": "cloud.ru",
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "cron-background-admission-control",
-  "next_action": "Add the WebSocket Cognitive Control Plane: expose read-only project/task/plan/background/cron-intent state to the UI, route explicit user confirmations and cancellations through typed commands, and forbid WebSocket clients from directly setting lifecycle, approval, receipt, or goal-completion state."
+  "current_stage": "websocket-cognitive-control-plane",
+  "next_action": "Add WebSocket Cognitive State subscriptions: emit sanitized project/task/background/cron-intent updates after durable mutations so the UI can stay current without polling.",
+  "control_plane": {
+    "state": "read-only snapshot",
+    "mutations": [
+      "explicit task confirmation",
+      "semantic task/background/cron-intent cancellation"
+    ],
+    "forbidden": [
+      "direct lifecycle status writes",
+      "direct approval grants",
+      "direct receipt writes",
+      "direct goal completion writes"
+    ],
+    "concurrency": "task mutations require expected_revision"
+  }
 }

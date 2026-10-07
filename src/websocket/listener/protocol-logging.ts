@@ -121,6 +121,8 @@ export function summarizeV2Command(parsed: unknown): string {
       "agent_id",
       "conversation_id",
       "task_id",
+      "project_id",
+      "expected_revision",
       "channel_id",
       "account_id",
       "route_id",

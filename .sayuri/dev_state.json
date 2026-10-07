@@ -1,41 +1,52 @@
 {
   "blockers": [],
   "last_result": "PASS",
-  "next_action": "Add the WebSocket Cognitive Control Plane using tools/dev.py recover, delta-only context, and targeted checks before the release gate.",
+  "next_action": "Add WebSocket Cognitive State subscriptions: emit sanitized project/task/background/cron-intent updates after durable mutations so the UI can stay current without polling.",
   "project": "Sayuri Tsukishiro",
-  "project_version": "0.1.82",
+  "project_version": "0.1.83",
   "schema_version": 1,
-  "stage": "zero-latency-development-fast-path",
+  "stage": "websocket-cognitive-control-plane",
   "task": {
-    "acceptance": [
-      "dev.py state/recover returns compact live context",
-      "dev.py check selects targeted checks from the current diff",
-      "dev.py finish refuses automatic commits on main and stages only task-owned paths",
-      "repository index can be regenerated deterministically"
-    ],
-    "goal": "Install the zero-latency development fast path",
-    "id": "dev-fastpath-v1",
+    "id": "cognitive-control-plane-v1",
+    "goal": "Expose a narrow typed WebSocket cognitive control plane without direct state mutation authority",
     "owned_paths": [
-      ".sayuri/**",
-      "tools/dev.py",
-      "tools/test_dev.py",
-      "docs/ai/SAYURI_ZERO_LATENCY_PROTOCOL.md"
+      "src/sayuri/control-plane.ts",
+      "src/sayuri/control-plane.test.ts",
+      "src/sayuri/cron-intent.ts",
+      "src/sayuri/index.ts",
+      "src/sayuri/version.ts",
+      "src/sayuri/module-versions.ts",
+      "src/types/sayuri-control-protocol.ts",
+      "src/types/protocol_v2.ts",
+      "src/websocket/listener/sayuri-control-protocol-inbound.ts",
+      "src/websocket/listener/sayuri-control-protocol-inbound.test.ts",
+      "src/websocket/listener/commands/sayuri-control.ts",
+      "src/websocket/listener/protocol-inbound.ts",
+      "src/websocket/listener/message-router.ts",
+      "src/websocket/listener/protocol-logging.ts",
+      "SAYURI_PROJECT_STATE.json",
+      "SAYURI_PROJECT_STATE.md",
+      ".sayuri/dev_state.json",
+      ".sayuri/dev_index.json"
     ],
     "target_tests": [
-      "python -m unittest tools.test_dev"
+      "bun test src/sayuri/control-plane.test.ts",
+      "bun test src/websocket/listener/sayuri-control-protocol-inbound.test.ts"
+    ],
+    "acceptance": [
+      "UI can read sanitized durable cognitive state",
+      "waiting-user confirmation is revision-guarded and semantic",
+      "task/background/cron-intent cancellation routes through domain functions",
+      "WebSocket protocol has no generic lifecycle/receipt/goal-completion setter"
     ]
   },
   "release_gate": {
     "status": "pending_ci",
-    "repairs": [
-      "source-file-size baseline restored without behavior change",
-      "Windows workspace-sandbox path expectation aligned with production resolve() semantics",
-      "launch-subagent integration test explicitly opts into unrestricted mode instead of depending on the old global default"
-    ],
     "validation_head": "pending"
   },
   "completed_tasks": [
     "dev-fastpath-v1",
-    "ci-regression-repair-v1"
+    "ci-regression-repair-v1",
+    "cognitive-control-plane-v1"
   ]
 }

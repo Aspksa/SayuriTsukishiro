@@ -67,6 +67,7 @@ import type {
   CronProtocolCommand,
   CronProtocolResponseMessage,
 } from "./schedule-protocol";
+import type * as SayuriControlProtocol from "./sayuri-control-protocol";
 import type * as SubagentProtocol from "./subagent-protocol";
 import type {
   ExecuteCommandCommand,
@@ -94,6 +95,7 @@ export type * from "./loop-status-protocol";
 export type * from "./runtime-scope";
 export type * from "./runtime-start-protocol";
 export type * from "./schedule-protocol";
+export type * from "./sayuri-control-protocol";
 export type * from "./task-control-protocol";
 export type * from "./teleport-protocol";
 export type * from "./toolset-protocol";
@@ -2432,6 +2434,7 @@ export type WsProtocolCommand =
   | RemoveQueueItemCommand
   | SubagentProtocol.LaunchSubagentCommand
   | MonitorStopCommand
+  | SayuriControlProtocol.SayuriControlCommand
   | SearchBranchesCommand
   | CheckoutBranchCommand
   | SecretListCommand
@@ -2541,6 +2544,7 @@ export type WsProtocolMessage =
   | SecretApplyResponse
   | RemoveQueueItemResponse
   | MonitorStopResponse
+  | SayuriControlProtocol.SayuriControlResponseMessage
   | SubagentProtocol.LaunchSubagentResponse;
 
 export type WsProtocolMessageType = WsProtocolMessage["type"];

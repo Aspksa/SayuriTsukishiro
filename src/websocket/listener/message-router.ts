@@ -293,6 +293,18 @@ export function createListenerMessageHandler(
         return;
       }
 
+      if (
+        parsed.type === "sayuri_state_get" ||
+        parsed.type === "sayuri_task_confirm" ||
+        parsed.type === "sayuri_cancel"
+      ) {
+        const { handleSayuriControlCommand } = await import(
+          "./commands/sayuri-control"
+        );
+        await handleSayuriControlCommand(parsed, { socket, safeSocketSend });
+        return;
+      }
+
       if (parsed.type === "app_server_info") {
         handleAppServerInfoCommand(parsed, { socket, safeSocketSend });
         return;

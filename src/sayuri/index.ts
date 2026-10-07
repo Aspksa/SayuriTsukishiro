@@ -4,6 +4,7 @@ export * from "./background-runtime";
 export * from "./background-supervisor";
 export * from "./cognitive-loop-supervisor";
 export * from "./completion-gate";
+export * from "./control-plane";
 export * from "./cron-intent";
 export * from "./evidence-ledger";
 export * from "./execution-control";

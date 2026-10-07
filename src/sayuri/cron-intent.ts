@@ -351,3 +351,28 @@ export async function admitNextSayuriCronIntent(input: {
   });
   return { kind: "goal-created", intentId: intent.id, goalId };
 }
+
+export async function cancelSayuriCronWorkIntent(input: {
+  projectId: string;
+  intentId: string;
+  store: SayuriCronIntentStore;
+  now?: string;
+}): Promise<SayuriCronWorkIntent> {
+  const intent = await input.store.get(input.projectId, input.intentId);
+  if (!intent) {
+    throw new Error(`Cron intent "${input.intentId}" was not found.`);
+  }
+  if (intent.status === "cancelled") return intent;
+  if (intent.status !== "pending") {
+    throw new Error(
+      `Only pending cron intents may be cancelled, got "${intent.status}".`,
+    );
+  }
+  const cancelled: SayuriCronWorkIntent = {
+    ...intent,
+    status: "cancelled",
+    updatedAt: input.now ?? new Date().toISOString(),
+  };
+  await input.store.save(cancelled);
+  return cancelled;
+}

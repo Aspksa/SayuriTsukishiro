@@ -1,38 +1,36 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.82  
-**Cognitive Core:** 0.25.0
+**Sayuri version:** 0.1.83  
+**Cognitive Core:** 0.26.0
 
-## Closed stage: Cron/Background Admission Control
+## Closed stage: WebSocket Cognitive Control Plane
 
-Cron triggers can now enter Sayuri without becoming direct autonomous model
-execution.
+Sayuri now exposes a narrow, typed cognitive-control boundary for the UI.
 
-A generic scheduler admission hook runs before conversation creation and prompt
-queueing. Ordinary Letta schedules remain unchanged. A Sayuri-marked schedule is
-consumed by a strict machine-readable intent parser and persisted as a durable
-project work intent instead of being sent directly to an LLM turn.
+The client may:
+- read sanitized project/task/plan/background/cron-intent state;
+- explicitly confirm a task that is already in `waiting-user`;
+- request semantic cancellation of a task, background lease, or pending cron intent.
 
-Each schedule occurrence has a deterministic intent ID, so duplicate delivery
-of the same occurrence is idempotent. Unknown/authority fields are rejected.
+The client may **not** directly set lifecycle states, grant tool approvals, write
+evidence receipts, or mark goals complete. Task mutations require
+`expected_revision`, so stale UI state fails closed instead of overwriting a
+newer durable task revision.
 
-The cognitive supervisor admits at most one pending scheduled intent when the
-project has no unfinished task. Admission creates a normal long-term goal with
-the schedule origin recorded as a constraint. From there the existing flow is
-unchanged:
+Background snapshots omit receipt bodies and expose only the durable receipt ID.
+Task cancellation is routed through the lifecycle and cancels active child
+background leases before the task snapshot is persisted.
 
 ```
-cron trigger -> durable work intent -> long-term goal
- -> single-active-task arbitration -> Planner Runtime
- -> Action Broker / evidence / completion gates
+UI command
+ -> strict protocol validator
+ -> semantic cognitive-control operation
+ -> domain lifecycle / cancellation function
+ -> durable state + task registry
 ```
-
-Cron callbacks therefore never receive mutation authority.
 
 ## NEXT_ACTION
 
-**Add the WebSocket Cognitive Control Plane: expose read-only
-project/task/plan/background/cron-intent state to the UI, route explicit user
-confirmations and cancellations through typed commands, and forbid WebSocket
-clients from directly setting lifecycle, approval, receipt, or goal-completion
-state.**
+**Add WebSocket Cognitive State subscriptions: emit sanitized
+project/task/background/cron-intent updates after durable mutations so the UI
+can stay current without polling.**
