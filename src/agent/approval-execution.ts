@@ -16,6 +16,7 @@ import {
 import { getCurrentWorkingDirectory } from "@/runtime-context";
 import {
   executeTool,
+  getExecutionContextById,
   isModToolParallelSafeForContext,
   prepareCurrentToolExecutionContext,
   type ToolExecutionResult,
@@ -155,6 +156,7 @@ async function executeSingleDecision(
       isStderr?: boolean,
     ) => void;
     toolContextId?: string;
+    workingDirectory?: string;
     parentScope?: { agentId: string; conversationId: string };
     onFileWrite?: (filePath: string, content: string) => void;
   },
@@ -206,6 +208,44 @@ async function executeSingleDecision(
         }
       } else {
         parsedArgs = decision.approval.toolArgs || {};
+      }
+
+      const executionRuntimeContext = options?.toolContextId
+        ? getExecutionContextById(options.toolContextId)?.runtimeContext
+        : undefined;
+      const runtimeControl = executionRuntimeContext?.toolExecutionControl;
+      if (runtimeControl?.grantApproval) {
+        const grant = await runtimeControl.grantApproval({
+          toolCallId: decision.approval.toolCallId,
+          toolName: decision.approval.toolName,
+          args: parsedArgs,
+          workingDirectory:
+            options?.workingDirectory ?? getCurrentWorkingDirectory(),
+          ...(executionRuntimeContext?.workspaceSandbox
+            ? { workspaceSandbox: executionRuntimeContext.workspaceSandbox }
+            : {}),
+        });
+        if (grant.decision !== "allow") {
+          const reason =
+            grant.reason ?? "Higher-level execution policy rejected approval.";
+          if (onChunk) {
+            onChunk({
+              message_type: "tool_return_message",
+              id: "dummy",
+              date: new Date().toISOString(),
+              tool_call_id: decision.approval.toolCallId,
+              tool_return: `Error: approved tool blocked by execution policy. ${reason}`,
+              status: "error",
+            });
+          }
+          return {
+            type: "tool",
+            tool_call_id: decision.approval.toolCallId,
+            tool_return: `Error: approved tool blocked by execution policy. ${reason}`,
+            status: "error",
+            reason,
+          };
+        }
       }
 
       const toolResult = await executeTool(

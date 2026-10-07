@@ -121,6 +121,122 @@ describe("app-server client", () => {
     client.close();
   });
 
+  test("sends revision-guarded Sayuri confirmation and semantic cancellation", async () => {
+    const { client, control } = createFakeClient();
+    control.open();
+    await client.connect();
+
+    const confirm = client.confirmSayuriTask({
+      project_id: "project-a",
+      task_id: "task-1",
+      expected_revision: 7,
+    });
+    expect(JSON.parse(control.sent[0] ?? "{}")).toEqual({
+      type: "sayuri_task_confirm",
+      request_id: "sayuri-task-confirm-1",
+      project_id: "project-a",
+      task_id: "task-1",
+      expected_revision: 7,
+    });
+    control.receive({
+      type: "sayuri_task_confirm_response",
+      request_id: "sayuri-task-confirm-1",
+      success: true,
+      task: {
+        id: "task-1",
+        goal: "Continue",
+        status: "running",
+        revision: 8,
+        createdAt: "2026-10-07T04:00:00.000Z",
+        updatedAt: "2026-10-07T04:01:00.000Z",
+        checkpoints: [],
+      },
+    });
+    expect((await confirm).task?.revision).toBe(8);
+
+    const cancel = client.cancelSayuri({
+      project_id: "project-a",
+      target: { kind: "task", task_id: "task-1", expected_revision: 8 },
+    });
+    expect(JSON.parse(control.sent[1] ?? "{}")).toEqual({
+      type: "sayuri_cancel",
+      request_id: "sayuri-cancel-2",
+      project_id: "project-a",
+      target: { kind: "task", task_id: "task-1", expected_revision: 8 },
+    });
+    control.receive({
+      type: "sayuri_cancel_response",
+      request_id: "sayuri-cancel-2",
+      success: true,
+      result: {
+        kind: "task",
+        task: {
+          id: "task-1",
+          goal: "Continue",
+          status: "cancelled",
+          revision: 9,
+          createdAt: "2026-10-07T04:00:00.000Z",
+          updatedAt: "2026-10-07T04:02:00.000Z",
+          checkpoints: [],
+        },
+      },
+    });
+    expect((await cancel).result?.kind).toBe("task");
+    client.close();
+  });
+
+  test("subscribes to Sayuri project state and receives typed push updates", async () => {
+    const { client, control } = createFakeClient();
+    const opened = client.connect();
+    control.open();
+    await opened;
+    const snapshot = {
+      projectId: "project-a",
+      tasks: [],
+      selectedTask: null,
+      background: [],
+      cronIntents: [],
+    };
+    const updates: unknown[] = [];
+    client.onSayuriStateUpdate((message) => updates.push(message));
+
+    const pending = client.subscribeSayuriState({ project_id: "project-a" });
+    expect(JSON.parse(control.sent[0] ?? "{}")).toEqual({
+      type: "sayuri_state_subscribe",
+      request_id: "sayuri-state-subscribe-1",
+      project_id: "project-a",
+    });
+    control.receive({
+      type: "sayuri_state_subscribe_response",
+      request_id: "sayuri-state-subscribe-1",
+      success: true,
+      snapshot,
+    });
+    expect((await pending).snapshot).toEqual(snapshot);
+
+    control.receive({
+      type: "sayuri_state_update",
+      project_id: "project-a",
+      snapshot,
+      event_seq: 1,
+      emitted_at: "2026-10-07T04:10:00.000Z",
+      idempotency_key: "sayuri-state-1",
+    });
+    expect(updates).toHaveLength(1);
+
+    const unsubscribe = client.unsubscribeSayuriState({
+      project_id: "project-a",
+    });
+    control.receive({
+      type: "sayuri_state_unsubscribe_response",
+      request_id: "sayuri-state-unsubscribe-2",
+      success: true,
+      unsubscribed: true,
+    });
+    expect((await unsubscribe).unsubscribed).toBe(true);
+    client.close();
+  });
+
   test("stops a Monitor and waits for the matching scoped reply", async () => {
     const { client, control } = createFakeClient();
     const opened = client.connect();

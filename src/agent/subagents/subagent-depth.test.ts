@@ -64,6 +64,18 @@ function scopedToolsFlag(parentDepth: number): string[] {
 }
 
 describe("subagent depth", () => {
+  test("subagents launch in standard permission mode", () => {
+    const args = buildSubagentArgs(
+      "general-purpose",
+      generalPurpose,
+      null,
+      "work",
+    );
+    const permissionModeIndex = args.indexOf("--permission-mode");
+    expect(permissionModeIndex).toBeGreaterThanOrEqual(0);
+    expect(args[permissionModeIndex + 1]).toBe("standard");
+  });
+
   test("each launch is one level below its launcher, including listener-hosted turns", () => {
     const child = launchChild({ PATH: "/bin" });
     expect(child[SUBAGENT_DEPTH_ENV]).toBe("1");

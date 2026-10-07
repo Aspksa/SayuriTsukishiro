@@ -131,6 +131,7 @@ test("external tool launches a prepared child through the real App Server and ch
       await client.runtimeStart({
         ...runtime,
         cwd: home,
+        mode: "unrestricted",
         recover_approvals: false,
         external_tools: [
           {

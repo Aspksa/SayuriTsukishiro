@@ -15,6 +15,11 @@ afterEach(() => {
 // Permission Mode: default
 // ============================================================================
 
+test("default permission mode is standard", () => {
+  permissionMode.reset();
+  expect(permissionMode.getMode()).toBe("standard");
+});
+
 test("default mode - no overrides", () => {
   permissionMode.setMode("standard");
 

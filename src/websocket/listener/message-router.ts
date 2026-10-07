@@ -69,6 +69,7 @@ import { emitLoopErrorNotice } from "./recoverable-notices";
 import { getActiveRuntime, safeEmitWsEvent } from "./runtime";
 import { parseListenerReadyMessage } from "./split-stream-lifecycle";
 import { validateResponseFormat } from "./structured-output";
+import { isTaskControlCommand } from "./task-control-protocol-inbound";
 import {
   buildTeleportContinuationMessages,
   clearExpectedInboundTeleport,
@@ -278,7 +279,7 @@ export function createListenerMessageHandler(
         return;
       }
 
-      if (parsed.type === "launch_subagent" || parsed.type === "monitor_stop") {
+      if (parsed.type === "launch_subagent" || isTaskControlCommand(parsed)) {
         const { handleTaskControlCommand } = await import(
           "./commands/task-control"
         );

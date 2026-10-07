@@ -1,4 +1,8 @@
 import type { AgentRuntimeScope } from "./runtime-scope";
+import type {
+  SayuriControlCommand,
+  SayuriControlResponseMessage,
+} from "./sayuri-control-protocol";
 
 /** Run a slash command in an agent conversation. */
 export interface ExecuteCommandCommand {
@@ -48,3 +52,24 @@ export interface MonitorStopResponse {
   stopped: boolean;
   error?: string;
 }
+
+export type TaskControlCommand = MonitorStopCommand | SayuriControlCommand;
+export type TaskControlResponse =
+  | MonitorStopResponse
+  | SayuriControlResponseMessage;
+
+export type {
+  SayuriCancelCommand,
+  SayuriCancelResponse,
+  SayuriControlCommand,
+  SayuriControlResponseMessage,
+  SayuriStateGetCommand,
+  SayuriStateGetResponse,
+  SayuriStateSubscribeCommand,
+  SayuriStateSubscribeResponse,
+  SayuriStateUnsubscribeCommand,
+  SayuriStateUnsubscribeResponse,
+  SayuriStateUpdateMessage,
+  SayuriTaskConfirmCommand,
+  SayuriTaskConfirmResponse,
+} from "./sayuri-control-protocol";

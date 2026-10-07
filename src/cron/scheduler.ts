@@ -54,6 +54,7 @@ import {
 } from "./prompt";
 import { safeAppendCronRunLogForTask } from "./run-log";
 import { isManagedCloudSandbox } from "./runner";
+import { tryAdmitScheduledTask } from "./scheduled-admission";
 import { SCHEDULE_ORIGIN_TAG } from "./scheduled-task-prompt";
 
 export {
@@ -348,6 +349,51 @@ async function fireCronTask(
       scheduledFor: task.scheduled_for,
     });
     return false;
+  }
+
+  if (trigger === "automatic" && getTask(task.id)?.status !== "active") {
+    return false;
+  }
+
+  const admission = await tryAdmitScheduledTask({ task, timing, trigger });
+  if (admission.handled) {
+    if (!admission.accepted) {
+      const error = admission.error ?? "Scheduled work admission was rejected.";
+      setLastRunOutcome(task.id, {
+        outcome: "failed",
+        reason: "runtime_unavailable",
+        runAt: timing.schedulerNow,
+        error,
+      });
+      safeAppendCronRunLogForTask(task, {
+        status: "error",
+        outcome: "failed",
+        reason: "runtime_unavailable",
+        error,
+        runAtMs: timing.schedulerNow.getTime(),
+        scheduledFor: task.scheduled_for,
+        summary: admission.summary,
+      });
+      return false;
+    }
+
+    recordTaskQueued(task.id, trigger, timing.schedulerNow);
+    const runReason = task.recurring ? "scheduled_time_matched" : "one_off_due";
+    safeAppendCronRunLogForTask(task, {
+      status: "ok",
+      outcome: "queued",
+      reason: runReason,
+      runAtMs: timing.schedulerNow.getTime(),
+      scheduledFor: task.scheduled_for,
+      firedAt: timing.schedulerNow.toISOString(),
+      summary:
+        admission.summary ??
+        (admission.referenceId
+          ? `Admitted work intent ${admission.referenceId}`
+          : "Scheduled work admitted."),
+    });
+    emitCronsUpdated(socket, task, task.conversation_id ?? "default");
+    return true;
   }
 
   let targetConversationId: string | undefined;

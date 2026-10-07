@@ -90,6 +90,11 @@ import {
   type PermissionModeState,
 } from "./permission-mode-state";
 import {
+  beginRuntimeToolExecution,
+  finishRuntimeToolExecution,
+  type RuntimeToolExecutionStart,
+} from "./runtime-execution-control";
+import {
   captureSecretRedactions,
   createScrubbedOutputStreamer,
   getAmbientRedactionSecrets,
@@ -111,6 +116,14 @@ import {
 import { resolveBackendSpecificToolAssets } from "./task-tool-assets";
 import { TOOL_DEFINITIONS, type ToolName } from "./tool-definitions";
 import { getInternalToolName, getServerToolName } from "./tool-name-mapping";
+import {
+  filterBuiltInToolNamesByClientAllowlist,
+  filterExternalToolsByClientAllowlist,
+  filterExternalToolsByRuntimeContext,
+  filterExternalToolsByScopeIds,
+  filterModToolsByClientAllowlist,
+  filterToolRegistryByClientAllowlist,
+} from "./tool-registry-filters";
 
 export { getInternalToolName, getServerToolName };
 
@@ -129,37 +142,21 @@ const SCOPED_BACKGROUND_TOOLS = new Set(["Monitor", "Workflow"]);
 // Tools that write files — used to trigger onFileWrite broadcast after execution.
 const FILE_MUTATING_TOOLS = new Set(["Edit", "Write"]);
 
-function matchesClientToolAllowlistEntry(
-  allowSet: Set<string> | null,
-  serverToolName: string,
-  internalToolName?: string,
-): boolean {
-  if (!allowSet) {
-    return true;
-  }
-
-  return (
-    allowSet.has(serverToolName) ||
-    (internalToolName !== undefined && allowSet.has(internalToolName))
-  );
+function runtimeExecutionDeniedResult(
+  execution: RuntimeToolExecutionStart,
+): ToolExecutionResult {
+  const suffix = execution.reason ? ` ${execution.reason}` : "";
+  return {
+    toolReturn: `Error: Tool execution denied by runtime control.${suffix}`,
+    status: "error",
+  };
 }
 
-function filterBuiltInToolNamesByClientAllowlist(
-  toolNames: ToolName[],
-  clientToolAllowlist?: string[],
-): ToolName[] {
-  if (clientToolAllowlist === undefined) {
-    return toolNames;
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return toolNames.filter((toolName) =>
-    matchesClientToolAllowlistEntry(
-      allowSet,
-      getServerToolName(toolName),
-      toolName,
-    ),
-  );
+function runtimeExecutionReceiptFailure(message: string): ToolExecutionResult {
+  return {
+    toolReturn: `Error: Tool executed, but its execution receipt could not be recorded. ${message}`,
+    status: "error",
+  };
 }
 
 const ARTIFACT_TOOL_NAMES: ToolName[] = [
@@ -194,96 +191,6 @@ function resolveArtifactToolNames(toolNames: ToolName[]): ToolName[] {
   }
 
   return [...withoutArtifactTools, ...ARTIFACT_TOOL_NAMES];
-}
-
-function filterExternalToolsByClientAllowlist(
-  externalTools: Map<string, ExternalToolDefinition>,
-  clientToolAllowlist?: string[],
-): Map<string, ExternalToolDefinition> {
-  if (clientToolAllowlist === undefined) {
-    return new Map(externalTools);
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return new Map(
-    Array.from(externalTools.entries()).filter(([internalName, tool]) =>
-      matchesClientToolAllowlistEntry(allowSet, tool.name, internalName),
-    ),
-  );
-}
-
-function filterToolRegistryByClientAllowlist(
-  registry: ToolRegistry,
-  clientToolAllowlist?: string[],
-): ToolRegistry {
-  if (clientToolAllowlist === undefined) {
-    return new Map(registry);
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return new Map(
-    Array.from(registry.entries()).filter(([internalName]) =>
-      matchesClientToolAllowlistEntry(
-        allowSet,
-        getServerToolName(internalName),
-        internalName,
-      ),
-    ),
-  );
-}
-
-function filterExternalToolsByRuntimeContext(
-  externalTools: Map<string, ExternalToolDefinition>,
-  runtimeContext: RuntimeContextSnapshot,
-): Map<string, ExternalToolDefinition> {
-  return new Map(
-    Array.from(externalTools.entries()).filter(([, tool]) => {
-      const matchesRuntime =
-        !tool.runtime ||
-        ((tool.runtime.agentId ?? null) === (runtimeContext.agentId ?? null) &&
-          tool.runtime.conversationId === runtimeContext.conversationId);
-      // An unscoped runtime tool belongs to its agent/conversation. The
-      // registration connection remains its execution return path, but turns
-      // for that runtime may originate from another connection or the process
-      // queue (for example, cron). Scoped tools remain connection-owned.
-      const matchesConnection =
-        tool.connectionId === undefined ||
-        tool.connectionId === runtimeContext.connectionId ||
-        (tool.runtime !== undefined && tool.scopeId === undefined);
-      return matchesRuntime && matchesConnection;
-    }),
-  );
-}
-
-function filterExternalToolsByScopeIds(
-  externalTools: Map<string, ExternalToolDefinition>,
-  externalToolScopeIds?: string[],
-): Map<string, ExternalToolDefinition> {
-  const selectedScopes = new Set(externalToolScopeIds ?? []);
-  return new Map(
-    Array.from(externalTools.entries()).filter(([, tool]) => {
-      if (tool.scopeId === undefined) {
-        return true;
-      }
-      return selectedScopes.has(tool.scopeId);
-    }),
-  );
-}
-
-function filterModToolsByClientAllowlist(
-  modTools: Map<string, ModToolDefinition>,
-  clientToolAllowlist?: string[],
-): Map<string, ModToolDefinition> {
-  if (clientToolAllowlist === undefined) {
-    return new Map(modTools);
-  }
-
-  const allowSet = new Set(clientToolAllowlist);
-  return new Map(
-    Array.from(modTools.entries()).filter(([name, tool]) =>
-      matchesClientToolAllowlistEntry(allowSet, tool.name, name),
-    ),
-  );
 }
 
 import { TOOLSET_CATALOG, WORKTREE_TOOL_NAMES } from "./toolset-catalog";
@@ -1758,6 +1665,17 @@ async function executeModTool(
       };
     }
 
+    const runtimeExecution = await beginRuntimeToolExecution(executionScope, {
+      toolName,
+      toolKind: "mod",
+      toolCallId: options.toolCallId,
+      args: args as Record<string, unknown>,
+      workingDirectory: options.workingDirectory,
+    });
+    if (!runtimeExecution.allowed) {
+      return runtimeExecutionDeniedResult(runtimeExecution);
+    }
+
     try {
       const backend = getBackend();
       const modContext = toolExecutionModContext(executionScope, options);
@@ -1822,6 +1740,13 @@ async function executeModTool(
         redactions,
       );
       const toolStatus = getModToolStatus(result);
+      const receiptError = await finishRuntimeToolExecution(
+        runtimeExecution,
+        toolStatus,
+      );
+      if (receiptError) {
+        return runtimeExecutionReceiptFailure(receiptError);
+      }
       const flattenedResponse = clampToolReturnContent(
         scrubModToolReturnContent(flattenToolResponse(result), redactions),
         toolName,
@@ -1891,6 +1816,16 @@ async function executeModTool(
             : String(error),
         redactions,
       );
+      const receiptError = await finishRuntimeToolExecution(
+        runtimeExecution,
+        "error",
+      );
+      if (receiptError) {
+        debugLog(
+          "tool-execution-control",
+          `Could not record failed ${toolName} execution: ${receiptError}`,
+        );
+      }
 
       tool.recordDiagnostic?.({
         capability: { id: toolName, kind: "tool" },
@@ -2103,7 +2038,18 @@ async function executeToolInner(
     ) {
       return createModPermissionToolResult(permissionDecision);
     }
-    return runWithRuntimeContext(executionScope, () =>
+    const runtimeExecution = await beginRuntimeToolExecution(executionScope, {
+      toolName: name,
+      toolKind: "external",
+      toolCallId: options?.toolCallId,
+      args: eventArgs as Record<string, unknown>,
+      workingDirectory,
+    });
+    if (!runtimeExecution.allowed) {
+      return runtimeExecutionDeniedResult(runtimeExecution);
+    }
+
+    const externalResult = await runWithRuntimeContext(executionScope, () =>
       autoBackgroundExternalTool(
         name,
         externalTool,
@@ -2121,6 +2067,13 @@ async function executeToolInner(
         ),
       ),
     );
+    const receiptError = await finishRuntimeToolExecution(
+      runtimeExecution,
+      externalResult.status,
+    );
+    return receiptError
+      ? runtimeExecutionReceiptFailure(receiptError)
+      : externalResult;
   }
   const internalName = resolveInternalToolName(name, activeRegistry);
   const tool = internalName ? activeRegistry.get(internalName) : undefined;
@@ -2193,6 +2146,17 @@ async function executeToolInner(
       };
     }
     if (options?.toolEndArgsRef) options.toolEndArgsRef.current = args;
+
+    const runtimeExecution = await beginRuntimeToolExecution(executionScope, {
+      toolName: internalName,
+      toolKind: "builtin",
+      toolCallId: options?.toolCallId,
+      args: args as Record<string, unknown>,
+      workingDirectory,
+    });
+    if (!runtimeExecution.allowed) {
+      return runtimeExecutionDeniedResult(runtimeExecution);
+    }
 
     let invocationSecrets: Record<string, string> = {};
     let invocationRedactions = captureSecretRedactions(scopedAgentId);
@@ -2302,6 +2266,13 @@ async function executeToolInner(
 
       // Check if tool returned a status (e.g., Bash returns status: "error" on abort)
       const toolStatus = recordResult?.status === "error" ? "error" : "success";
+      const receiptError = await finishRuntimeToolExecution(
+        runtimeExecution,
+        toolStatus,
+      );
+      if (receiptError) {
+        return runtimeExecutionReceiptFailure(receiptError);
+      }
 
       // Flatten the response to plain text
       let flattenedResponse = flattenToolResponse(result);
@@ -2388,6 +2359,16 @@ async function executeToolInner(
             error instanceof Error ? error.message : String(error),
             invocationRedactions,
           );
+      const receiptError = await finishRuntimeToolExecution(
+        runtimeExecution,
+        "error",
+      );
+      if (receiptError) {
+        debugLog(
+          "tool-execution-control",
+          `Could not record failed ${internalName} execution: ${receiptError}`,
+        );
+      }
 
       // Track tool usage error
       telemetry.trackToolUsage(

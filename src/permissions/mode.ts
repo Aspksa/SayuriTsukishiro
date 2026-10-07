@@ -7,7 +7,7 @@ export type PermissionMode =
   | "strict";
 
 /** The default starting permission mode. */
-export const DEFAULT_PERMISSION_MODE: PermissionMode = "unrestricted";
+export const DEFAULT_PERMISSION_MODE: PermissionMode = "standard";
 
 /** All valid current permission mode values. */
 export const VALID_PERMISSION_MODES: readonly PermissionMode[] = [

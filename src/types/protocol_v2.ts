@@ -71,10 +71,10 @@ import type * as SubagentProtocol from "./subagent-protocol";
 import type {
   ExecuteCommandCommand,
   ExecuteCommandResponseMessage,
-  MonitorStopCommand,
-  MonitorStopResponse,
   RemoveQueueItemCommand,
   RemoveQueueItemResponse,
+  TaskControlCommand,
+  TaskControlResponse,
 } from "./task-control-protocol";
 
 export type * from "./subagent-protocol";
@@ -2431,7 +2431,7 @@ export type WsProtocolCommand =
   | ExecuteCommandCommand
   | RemoveQueueItemCommand
   | SubagentProtocol.LaunchSubagentCommand
-  | MonitorStopCommand
+  | TaskControlCommand
   | SearchBranchesCommand
   | CheckoutBranchCommand
   | SecretListCommand
@@ -2540,7 +2540,7 @@ export type WsProtocolMessage =
   | SecretListResponse
   | SecretApplyResponse
   | RemoveQueueItemResponse
-  | MonitorStopResponse
+  | TaskControlResponse
   | SubagentProtocol.LaunchSubagentResponse;
 
 export type WsProtocolMessageType = WsProtocolMessage["type"];

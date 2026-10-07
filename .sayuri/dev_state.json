@@ -1,0 +1,45 @@
+{
+  "blockers": [],
+  "last_result": "PASS",
+  "next_action": "Bind SayuriCognitiveControlPanel into the first runtime surface that owns both an AppServerClient and an explicit Sayuri projectId; do not infer project identity from cwd or conversation IDs.",
+  "project": "Sayuri Tsukishiro",
+  "project_version": "0.1.86",
+  "schema_version": 1,
+  "stage": "ink-cognitive-control-panel",
+  "task": {
+    "id": "ink-cognitive-control-panel-v1",
+    "goal": "Render live Sayuri cognitive state in a reusable Ink panel with only safe semantic actions",
+    "owned_paths": [
+      "src/cli/components/SayuriCognitiveControlPanel.tsx",
+      "src/cli/components/SayuriCognitiveControlPanel.test.ts",
+      "src/sayuri/version.ts",
+      "src/sayuri/module-versions.ts",
+      "SAYURI_PROJECT_STATE.json",
+      "SAYURI_PROJECT_STATE.md",
+      ".sayuri/dev_state.json",
+      ".sayuri/dev_index.json"
+    ],
+    "target_tests": [
+      "bun test src/cli/components/SayuriCognitiveControlPanel.test.ts"
+    ],
+    "acceptance": [
+      "panel projects task/plan/background/cron state",
+      "confirm is offered only for waiting-user",
+      "cancel is offered only for nonterminal task",
+      "actions use the displayed task revision",
+      "panel requires explicit projectId and client"
+    ]
+  },
+  "release_gate": {
+    "status": "pending_ci",
+    "validation_head": "pending"
+  },
+  "completed_tasks": [
+    "dev-fastpath-v1",
+    "ci-regression-repair-v1",
+    "cognitive-control-plane-v1",
+    "cognitive-state-subscriptions-v1",
+    "cognitive-control-client-cache-v1",
+    "ink-cognitive-control-panel-v1"
+  ]
+}

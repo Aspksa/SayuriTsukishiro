@@ -23,6 +23,17 @@ import type {
   RuntimeExternalToolsUpdateResponseMessage,
   RuntimeStartCommand,
   RuntimeStartResponseMessage,
+  SayuriCancelCommand,
+  SayuriCancelResponse,
+  SayuriStateGetCommand,
+  SayuriStateGetResponse,
+  SayuriStateSubscribeCommand,
+  SayuriStateSubscribeResponse,
+  SayuriStateUnsubscribeCommand,
+  SayuriStateUnsubscribeResponse,
+  SayuriStateUpdateMessage,
+  SayuriTaskConfirmCommand,
+  SayuriTaskConfirmResponse,
   SyncCommand,
   SyncResponseMessage,
   WsProtocolCommand,
@@ -468,6 +479,135 @@ export class AppServerClient {
         predicate: isAppServerInfoResponseMessage,
       },
     );
+  }
+
+  confirmSayuriTask(
+    command: Omit<SayuriTaskConfirmCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriTaskConfirmResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriTaskConfirmResponse> {
+    return this.request(
+      {
+        type: "sayuri_task_confirm",
+        ...command,
+        request_id:
+          command.request_id ?? this.nextRequestId("sayuri-task-confirm"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriTaskConfirmResponse =>
+          message.type === "sayuri_task_confirm_response",
+      },
+    );
+  }
+
+  cancelSayuri(
+    command: Omit<SayuriCancelCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriCancelResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriCancelResponse> {
+    return this.request(
+      {
+        type: "sayuri_cancel",
+        ...command,
+        request_id: command.request_id ?? this.nextRequestId("sayuri-cancel"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriCancelResponse =>
+          message.type === "sayuri_cancel_response",
+      },
+    );
+  }
+
+  sayuriStateGet(
+    command: Omit<SayuriStateGetCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriStateGetResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriStateGetResponse> {
+    return this.request(
+      {
+        type: "sayuri_state_get",
+        ...command,
+        request_id:
+          command.request_id ?? this.nextRequestId("sayuri-state-get"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriStateGetResponse =>
+          message.type === "sayuri_state_get_response",
+      },
+    );
+  }
+
+  subscribeSayuriState(
+    command: Omit<SayuriStateSubscribeCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriStateSubscribeResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriStateSubscribeResponse> {
+    return this.request(
+      {
+        type: "sayuri_state_subscribe",
+        ...command,
+        request_id:
+          command.request_id ?? this.nextRequestId("sayuri-state-subscribe"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriStateSubscribeResponse =>
+          message.type === "sayuri_state_subscribe_response",
+      },
+    );
+  }
+
+  unsubscribeSayuriState(
+    command: Omit<SayuriStateUnsubscribeCommand, "type" | "request_id"> & {
+      request_id?: string;
+    },
+    options: Omit<
+      AppServerRequestOptions<SayuriStateUnsubscribeResponse>,
+      "predicate"
+    > = {},
+  ): Promise<SayuriStateUnsubscribeResponse> {
+    return this.request(
+      {
+        type: "sayuri_state_unsubscribe",
+        ...command,
+        request_id:
+          command.request_id ?? this.nextRequestId("sayuri-state-unsubscribe"),
+      },
+      {
+        ...options,
+        predicate: (message): message is SayuriStateUnsubscribeResponse =>
+          message.type === "sayuri_state_unsubscribe_response",
+      },
+    );
+  }
+
+  onSayuriStateUpdate(
+    handler: (message: SayuriStateUpdateMessage) => void,
+  ): () => void {
+    return this.onMessage((message, channel) => {
+      if (channel === "control" && message.type === "sayuri_state_update") {
+        handler(message);
+      }
+    });
   }
 
   stopMonitor(

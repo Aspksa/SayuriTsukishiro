@@ -79,6 +79,7 @@ import {
 import { disableModsForProcess, shouldDisableMods } from "./mods/disable";
 import { applyStartupPermissionMode } from "./permissions/startup";
 import { assertSupportedBunRuntime } from "./runtime-version";
+import { installSayuriCronAdmission } from "./sayuri/cron-intent";
 import {
   type Settings,
   settingsManager,
@@ -570,11 +571,10 @@ async function getLocalBackendStartupFallbackSession(
 
 async function main(): Promise<void> {
   markMilestone("CLI_START");
+  installSayuriCronAdmission();
   await initializeDesktopCredentials();
-
   // Exit when the owning Desktop or terminal process dies.
   startOrphanDetection();
-
   const rawCliArgs = process.argv.slice(2);
   let subcommandArgs = rawCliArgs;
   let explicitBackendMode: BackendMode | undefined;

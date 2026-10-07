@@ -437,6 +437,8 @@ export type ListenerRuntime = {
    * protocol consumers can exist without owning a WebSocket.
    */
   streamObservers?: Set<ListenerStreamObserver>;
+  /** Unsubscribe from Sayuri durable project-state events. */
+  _unsubscribeSayuriProjectState?: (() => void) | undefined;
   /** Unsubscribe from subagent state store (set on socket open, cleared on close). */
   _unsubscribeSubagentState?: (() => void) | undefined;
   /** Unsubscribe from subagent stream events (set on socket open, cleared on close). */

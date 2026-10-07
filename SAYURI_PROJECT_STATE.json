@@ -1,0 +1,58 @@
+{
+  "project": "Sayuri Tsukishiro",
+  "version": "0.1.86",
+  "milestone": "Ink Cognitive Control Panel",
+  "base_runtime": {
+    "name": "Letta Code",
+    "imported_version": "0.34.4"
+  },
+  "model_policy": {
+    "provider": "cloud.ru",
+    "model": "DeepSeek-V4-Flash",
+    "automatic_fallbacks": false
+  },
+  "current_stage": "ink-cognitive-control-panel",
+  "next_action": "Bind SayuriCognitiveControlPanel into the first runtime surface that owns both an AppServerClient and an explicit Sayuri projectId; do not infer project identity from cwd or conversation IDs.",
+  "control_plane": {
+    "state": "read-only snapshot",
+    "mutations": [
+      "explicit task confirmation",
+      "semantic task/background/cron-intent cancellation"
+    ],
+    "forbidden": [
+      "direct lifecycle status writes",
+      "direct approval grants",
+      "direct receipt writes",
+      "direct goal completion writes"
+    ],
+    "concurrency": "task mutations require expected_revision",
+    "subscriptions": "connection-scoped project subscriptions with initial snapshot and coalesced durable updates",
+    "event_sources": [
+      "task registry",
+      "background lease store",
+      "cron intent store"
+    ],
+    "reconnect": "subscriptions reuse listener connection state and survive suspend/resume"
+  },
+  "control_client": {
+    "cache": "per-project sanitized snapshot cache",
+    "subscriptions": "local watchers share one remote subscription",
+    "mutations": "typed revision-guarded confirm and semantic cancel",
+    "cleanup": "reference-counted unsubscribe plus explicit close"
+  },
+  "control_ui": {
+    "component": "SayuriCognitiveControlPanel",
+    "input": "explicit projectId + SayuriCognitiveStateClient",
+    "state": [
+      "active task/revision",
+      "bounded plan steps",
+      "active background work",
+      "pending cron intents"
+    ],
+    "actions": [
+      "c: waiting-user confirmation",
+      "x: nonterminal task cancellation"
+    ],
+    "authority": "semantic client methods only; no generic lifecycle setter"
+  }
+}

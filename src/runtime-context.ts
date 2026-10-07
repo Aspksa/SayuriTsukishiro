@@ -18,6 +18,67 @@ export interface RuntimeWorkspaceSandbox {
   isolationRoot: string;
 }
 
+export interface RuntimeModelRoute {
+  /** Exact runtime model handle; the lower layer must not choose a substitute. */
+  modelHandle: string;
+  /** Provider type expected by model resolution for this handle. */
+  providerType: string;
+  /** Exact routes never opt into provider/model fallback behavior. */
+  exact: true;
+}
+
+export type RuntimeToolExecutionKind = "builtin" | "mod" | "external";
+
+export interface RuntimeToolExecutionRequest {
+  toolName: string;
+  toolKind: RuntimeToolExecutionKind;
+  toolCallId?: string | null;
+  args: Readonly<Record<string, unknown>>;
+  workingDirectory: string;
+  agentId?: string | null;
+  conversationId?: string | null;
+}
+
+export interface RuntimeToolExecutionDecision {
+  decision: "allow" | "deny";
+  executionId?: string;
+  reason?: string;
+}
+
+export interface RuntimeToolExecutionOutcome {
+  request: RuntimeToolExecutionRequest;
+  executionId?: string;
+  status: "success" | "error";
+  durationMs: number;
+}
+
+export interface RuntimeToolApprovalGrant {
+  toolCallId: string;
+  toolName: string;
+  args: Readonly<Record<string, unknown>>;
+  workingDirectory: string;
+  workspaceSandbox?: RuntimeWorkspaceSandbox;
+}
+
+export interface RuntimeToolApprovalDecision {
+  decision: "allow" | "deny";
+  reason?: string;
+}
+
+export interface RuntimeToolExecutionControl {
+  authorize(
+    request: RuntimeToolExecutionRequest,
+  ): RuntimeToolExecutionDecision | Promise<RuntimeToolExecutionDecision>;
+  /**
+   * Bridge a human-approved tool call into the higher-level policy layer.
+   * Implementations should treat grants as one-shot and bind them to toolCallId.
+   */
+  grantApproval?(
+    grant: RuntimeToolApprovalGrant,
+  ): RuntimeToolApprovalDecision | Promise<RuntimeToolApprovalDecision>;
+  record?(outcome: RuntimeToolExecutionOutcome): void | Promise<void>;
+}
+
 export interface RuntimeContextSnapshot {
   /** Listener transport connection that owns the current turn, when present. */
   connectionId?: string | null;
@@ -40,6 +101,10 @@ export interface RuntimeContextSnapshot {
   toolContextId?: string | null;
   permissionMode?: RuntimePermissionMode;
   workspaceSandbox?: RuntimeWorkspaceSandbox;
+  /** Optional exact model route owned by a higher-level product policy. */
+  modelRoute?: RuntimeModelRoute;
+  /** Optional higher-level policy boundary invoked immediately before tools run. */
+  toolExecutionControl?: RuntimeToolExecutionControl;
   executionSettings?: RuntimeExecutionSettings;
 }
 

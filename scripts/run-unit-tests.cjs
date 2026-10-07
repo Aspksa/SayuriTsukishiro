@@ -28,6 +28,7 @@ const dirs = [
   "src/queue",
   "src/reminders",
   "src/sandbox",
+  "src/sayuri",
   "src/skills",
   "src/telemetry",
   "src/test-utils",
