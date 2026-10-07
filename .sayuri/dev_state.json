@@ -1,20 +1,17 @@
 {
   "blockers": [],
   "last_result": "PASS",
-  "next_action": "Add the Ink/TUI Cognitive Control panel that binds to SayuriCognitiveStateClient, shows active task/plan/background/cron state, and exposes only revision-guarded confirm/cancel actions.",
+  "next_action": "Bind SayuriCognitiveControlPanel into the first runtime surface that owns both an AppServerClient and an explicit Sayuri projectId; do not infer project identity from cwd or conversation IDs.",
   "project": "Sayuri Tsukishiro",
-  "project_version": "0.1.85",
+  "project_version": "0.1.86",
   "schema_version": 1,
-  "stage": "cognitive-control-client-cache",
+  "stage": "ink-cognitive-control-panel",
   "task": {
-    "id": "cognitive-control-client-cache-v1",
-    "goal": "Provide a reusable UI-facing cache over Sayuri cognitive state subscriptions",
+    "id": "ink-cognitive-control-panel-v1",
+    "goal": "Render live Sayuri cognitive state in a reusable Ink panel with only safe semantic actions",
     "owned_paths": [
-      "src/app-server-client.ts",
-      "src/app-server-client.test.ts",
-      "src/sayuri/cognitive-state-client.ts",
-      "src/sayuri/cognitive-state-client.test.ts",
-      "src/sayuri/index.ts",
+      "src/cli/components/SayuriCognitiveControlPanel.tsx",
+      "src/cli/components/SayuriCognitiveControlPanel.test.ts",
       "src/sayuri/version.ts",
       "src/sayuri/module-versions.ts",
       "SAYURI_PROJECT_STATE.json",
@@ -23,14 +20,14 @@
       ".sayuri/dev_index.json"
     ],
     "target_tests": [
-      "bun test src/app-server-client.test.ts",
-      "bun test src/sayuri/cognitive-state-client.test.ts"
+      "bun test src/cli/components/SayuriCognitiveControlPanel.test.ts"
     ],
     "acceptance": [
-      "multiple local watchers share one remote project subscription",
-      "push updates fan out through a stable per-project cache",
-      "refresh updates the cache deterministically",
-      "confirm/cancel remain typed and revision guarded"
+      "panel projects task/plan/background/cron state",
+      "confirm is offered only for waiting-user",
+      "cancel is offered only for nonterminal task",
+      "actions use the displayed task revision",
+      "panel requires explicit projectId and client"
     ]
   },
   "release_gate": {
@@ -42,6 +39,7 @@
     "ci-regression-repair-v1",
     "cognitive-control-plane-v1",
     "cognitive-state-subscriptions-v1",
-    "cognitive-control-client-cache-v1"
+    "cognitive-control-client-cache-v1",
+    "ink-cognitive-control-panel-v1"
   ]
 }

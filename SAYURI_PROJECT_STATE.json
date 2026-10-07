@@ -1,7 +1,7 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.85",
-  "milestone": "Cognitive Control Client Cache",
+  "version": "0.1.86",
+  "milestone": "Ink Cognitive Control Panel",
   "base_runtime": {
     "name": "Letta Code",
     "imported_version": "0.34.4"
@@ -11,8 +11,8 @@
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "cognitive-control-client-cache",
-  "next_action": "Add the Ink/TUI Cognitive Control panel that binds to SayuriCognitiveStateClient, shows active task/plan/background/cron state, and exposes only revision-guarded confirm/cancel actions.",
+  "current_stage": "ink-cognitive-control-panel",
+  "next_action": "Bind SayuriCognitiveControlPanel into the first runtime surface that owns both an AppServerClient and an explicit Sayuri projectId; do not infer project identity from cwd or conversation IDs.",
   "control_plane": {
     "state": "read-only snapshot",
     "mutations": [
@@ -39,5 +39,20 @@
     "subscriptions": "local watchers share one remote subscription",
     "mutations": "typed revision-guarded confirm and semantic cancel",
     "cleanup": "reference-counted unsubscribe plus explicit close"
+  },
+  "control_ui": {
+    "component": "SayuriCognitiveControlPanel",
+    "input": "explicit projectId + SayuriCognitiveStateClient",
+    "state": [
+      "active task/revision",
+      "bounded plan steps",
+      "active background work",
+      "pending cron intents"
+    ],
+    "actions": [
+      "c: waiting-user confirmation",
+      "x: nonterminal task cancellation"
+    ],
+    "authority": "semantic client methods only; no generic lifecycle setter"
   }
 }
