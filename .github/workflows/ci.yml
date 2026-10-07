@@ -378,14 +378,20 @@ jobs:
           LETTA_API_KEY: ${{ secrets.LETTA_API_KEY }}
         run: bun run src/test-utils/headless-windows.ts --model sonnet-4.6-low
 
-      - name: Publish dry-run
+      - name: Validate publish artifact
         if: ${{ github.event_name == 'push' }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
           LETTA_API_KEY: dummy
-        run: bun publish --dry-run
+        run: |
+          if [ -n "$NPM_CONFIG_TOKEN" ]; then
+            bun publish --dry-run
+          else
+            echo "NPM_TOKEN is unavailable; validating the package locally instead."
+            bun pm pack
+          fi
 
-      - name: Pack (no auth available)
+      - name: Pack (pull request)
         if: ${{ github.event_name != 'push' }}
         run: bun pm pack
 
