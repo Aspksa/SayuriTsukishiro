@@ -115,6 +115,8 @@ describe("Sayuri cognitive state client", () => {
       right.push(value.tasks[0]?.revision ?? 0);
     });
     expect(fake.subscribe).toHaveBeenCalledTimes(1);
+    expect(left).toEqual([1]);
+    expect(right).toEqual([1]);
 
     fake.push({
       type: "sayuri_state_update",

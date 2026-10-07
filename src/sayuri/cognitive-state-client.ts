@@ -29,7 +29,9 @@ export interface SayuriCognitiveStateTransport {
     task_id: string;
     expected_revision: number;
   }): Promise<SayuriTaskConfirmResponse>;
-  cancelSayuri(command: Omit<SayuriCancelCommand, "type" | "request_id">): Promise<SayuriCancelResponse>;
+  cancelSayuri(
+    command: Omit<SayuriCancelCommand, "type" | "request_id">,
+  ): Promise<SayuriCancelResponse>;
 }
 
 export type SayuriCognitiveStateListener = (
@@ -93,10 +95,11 @@ export class SayuriCognitiveStateClient {
       };
       this.#projects.set(id, entry);
     }
+    const alreadySubscribed = entry.remoteSubscribed;
     entry.listeners.add(listener);
     try {
       await this.ensureSubscribed(id, entry);
-      if (entry.snapshot) listener(entry.snapshot);
+      if (alreadySubscribed && entry.snapshot) listener(entry.snapshot);
     } catch (error) {
       entry.listeners.delete(listener);
       if (entry.listeners.size === 0) this.#projects.delete(id);
@@ -160,7 +163,10 @@ export class SayuriCognitiveStateClient {
 
   async cancel(
     project: string,
-    target: Omit<SayuriCancelCommand, "type" | "request_id" | "project_id">["target"],
+    target: Omit<
+      SayuriCancelCommand,
+      "type" | "request_id" | "project_id"
+    >["target"],
   ): Promise<NonNullable<SayuriCancelResponse["result"]>> {
     const response = await this.#transport.cancelSayuri({
       project_id: projectId(project),
@@ -198,7 +204,10 @@ export class SayuriCognitiveStateClient {
       }
     }
     if (failures.length > 0) {
-      throw new AggregateError(failures, "Failed to close Sayuri subscriptions.");
+      throw new AggregateError(
+        failures,
+        "Failed to close Sayuri subscriptions.",
+      );
     }
   }
 
