@@ -65,6 +65,11 @@ export type {
   SayuriControlResponseMessage,
   SayuriStateGetCommand,
   SayuriStateGetResponse,
+  SayuriStateSubscribeCommand,
+  SayuriStateSubscribeResponse,
+  SayuriStateUnsubscribeCommand,
+  SayuriStateUnsubscribeResponse,
+  SayuriStateUpdateMessage,
   SayuriTaskConfirmCommand,
   SayuriTaskConfirmResponse,
 } from "./sayuri-control-protocol";

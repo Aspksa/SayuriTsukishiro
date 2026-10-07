@@ -1,7 +1,7 @@
 {
   "project": "Sayuri Tsukishiro",
-  "version": "0.1.83",
-  "milestone": "WebSocket Cognitive Control Plane",
+  "version": "0.1.84",
+  "milestone": "WebSocket Cognitive State Subscriptions",
   "base_runtime": {
     "name": "Letta Code",
     "imported_version": "0.34.4"
@@ -11,8 +11,8 @@
     "model": "DeepSeek-V4-Flash",
     "automatic_fallbacks": false
   },
-  "current_stage": "websocket-cognitive-control-plane",
-  "next_action": "Add WebSocket Cognitive State subscriptions: emit sanitized project/task/background/cron-intent updates after durable mutations so the UI can stay current without polling.",
+  "current_stage": "websocket-cognitive-state-subscriptions",
+  "next_action": "Add the Cognitive Control UI projection/client cache: consume sayuri_state_subscribe/update, render active task/plan/background/cron state, and issue revision-guarded confirm/cancel commands.",
   "control_plane": {
     "state": "read-only snapshot",
     "mutations": [
@@ -25,6 +25,13 @@
       "direct receipt writes",
       "direct goal completion writes"
     ],
-    "concurrency": "task mutations require expected_revision"
+    "concurrency": "task mutations require expected_revision",
+    "subscriptions": "connection-scoped project subscriptions with initial snapshot and coalesced durable updates",
+    "event_sources": [
+      "task registry",
+      "background lease store",
+      "cron intent store"
+    ],
+    "reconnect": "subscriptions reuse listener connection state and survive suspend/resume"
   }
 }

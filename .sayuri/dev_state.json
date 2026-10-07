@@ -1,55 +1,62 @@
 {
   "blockers": [],
   "last_result": "PASS",
-  "next_action": "Add WebSocket Cognitive State subscriptions: emit sanitized project/task/background/cron-intent updates after durable mutations so the UI can stay current without polling.",
+  "next_action": "Add the Cognitive Control UI projection/client cache: consume sayuri_state_subscribe/update, render active task/plan/background/cron state, and issue revision-guarded confirm/cancel commands.",
   "project": "Sayuri Tsukishiro",
-  "project_version": "0.1.83",
+  "project_version": "0.1.84",
   "schema_version": 1,
-  "stage": "websocket-cognitive-control-plane",
+  "stage": "websocket-cognitive-state-subscriptions",
   "task": {
-    "id": "cognitive-control-plane-v1",
-    "goal": "Expose a narrow typed WebSocket cognitive control plane without direct state mutation authority",
+    "id": "cognitive-state-subscriptions-v1",
+    "goal": "Stream sanitized durable cognitive state to connection-scoped project subscribers",
     "owned_paths": [
-      "src/sayuri/control-plane.ts",
-      "src/sayuri/control-plane.test.ts",
+      "src/sayuri/state-events.ts",
+      "src/sayuri/state-events.test.ts",
+      "src/sayuri/task-registry.ts",
+      "src/sayuri/background-lease.ts",
       "src/sayuri/cron-intent.ts",
-      "src/sayuri/index.ts",
-      "src/sayuri/version.ts",
-      "src/sayuri/module-versions.ts",
       "src/types/sayuri-control-protocol.ts",
-      "src/types/protocol_v2.ts",
+      "src/types/task-control-protocol.ts",
       "src/websocket/listener/sayuri-control-protocol-inbound.ts",
       "src/websocket/listener/sayuri-control-protocol-inbound.test.ts",
+      "src/websocket/listener/sayuri-control-subscriptions.ts",
+      "src/websocket/listener/sayuri-control-subscriptions.test.ts",
       "src/websocket/listener/commands/sayuri-control.ts",
-      "src/websocket/listener/protocol-inbound.ts",
+      "src/websocket/listener/commands/task-control.ts",
       "src/websocket/listener/message-router.ts",
-      "src/websocket/listener/protocol-logging.ts",
+      "src/websocket/listener/process-services.ts",
+      "src/websocket/listener/types.ts",
+      "src/websocket/listener/protocol-outbound-routing.ts",
+      "src/app-server-client.ts",
+      "src/app-server-client.test.ts",
+      "src/sayuri/version.ts",
+      "src/sayuri/module-versions.ts",
       "SAYURI_PROJECT_STATE.json",
       "SAYURI_PROJECT_STATE.md",
       ".sayuri/dev_state.json",
       ".sayuri/dev_index.json"
     ],
     "target_tests": [
-      "bun test src/sayuri/control-plane.test.ts",
-      "bun test src/websocket/listener/sayuri-control-protocol-inbound.test.ts"
+      "bun test src/sayuri/state-events.test.ts",
+      "bun test src/websocket/listener/sayuri-control-protocol-inbound.test.ts",
+      "bun test src/websocket/listener/sayuri-control-subscriptions.test.ts",
+      "bun test src/app-server-client.test.ts"
     ],
     "acceptance": [
-      "UI can read sanitized durable cognitive state",
-      "waiting-user confirmation is revision-guarded and semantic",
-      "task/background/cron-intent cancellation routes through domain functions",
-      "WebSocket protocol has no generic lifecycle/receipt/goal-completion setter"
+      "subscribe returns an initial sanitized snapshot",
+      "durable task/background/cron changes emit coalesced project updates",
+      "subscriptions survive listener suspend/resume",
+      "typed AppServerClient exposes subscription helpers"
     ]
   },
   "release_gate": {
     "status": "pending_ci",
-    "validation_head": "pending",
-    "repairs": [
-      "subagent lease creation now validates explicit historical fixtures relative to issuedAt while runtime binding still validates against live now"
-    ]
+    "validation_head": "pending"
   },
   "completed_tasks": [
     "dev-fastpath-v1",
     "ci-regression-repair-v1",
-    "cognitive-control-plane-v1"
+    "cognitive-control-plane-v1",
+    "cognitive-state-subscriptions-v1"
   ]
 }

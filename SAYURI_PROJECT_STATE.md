@@ -1,36 +1,32 @@
 # Sayuri Tsukishiro — Project State
 
-**Sayuri version:** 0.1.83  
-**Cognitive Core:** 0.26.0
+**Sayuri version:** 0.1.84  
+**Cognitive Core:** 0.27.0
 
-## Closed stage: WebSocket Cognitive Control Plane
+## Closed stage: WebSocket Cognitive State Subscriptions
 
-Sayuri now exposes a narrow, typed cognitive-control boundary for the UI.
+The Cognitive Control Plane now supports live project subscriptions in addition
+to explicit snapshot reads.
 
-The client may:
-- read sanitized project/task/plan/background/cron-intent state;
-- explicitly confirm a task that is already in `waiting-user`;
-- request semantic cancellation of a task, background lease, or pending cron intent.
+A client subscribes with `sayuri_state_subscribe` and immediately receives a
+sanitized project snapshot. Durable task-registry, background-lease, and
+cron-intent writes publish project-change signals only after persistence
+succeeds. The listener coalesces repeated signals by project and emits the
+latest `sayuri_state_update` snapshot to subscribed connections.
 
-The client may **not** directly set lifecycle states, grant tool approvals, write
-evidence receipts, or mark goals complete. Task mutations require
-`expected_revision`, so stale UI state fails closed instead of overwriting a
-newer durable task revision.
+Subscriptions reuse the existing listener connection subscription set, so they
+survive suspend/resume and are removed with normal connection cleanup. Outbound
+state updates use the bounded wire queue and status-frame latest-wins
+coalescing.
 
-Background snapshots omit receipt bodies and expose only the durable receipt ID.
-Task cancellation is routed through the lifecycle and cancels active child
-background leases before the task snapshot is persisted.
+The typed `AppServerClient` now exposes state read, subscribe, unsubscribe,
+and update-observer helpers, so UI code does not need raw WebSocket JSON.
 
-```
-UI command
- -> strict protocol validator
- -> semantic cognitive-control operation
- -> domain lifecycle / cancellation function
- -> durable state + task registry
-```
+Security boundaries from v0.1.83 remain unchanged: clients still cannot write
+arbitrary lifecycle state, approvals, receipts, or goal completion.
 
 ## NEXT_ACTION
 
-**Add WebSocket Cognitive State subscriptions: emit sanitized
-project/task/background/cron-intent updates after durable mutations so the UI
-can stay current without polling.**
+**Add the Cognitive Control UI projection/client cache: consume
+`sayuri_state_subscribe/update`, render active task/plan/background/cron
+state, and issue revision-guarded confirm/cancel commands.**

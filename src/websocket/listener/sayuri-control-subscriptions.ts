@@ -28,7 +28,10 @@ function normalizedProjectId(projectId: string): string {
 }
 
 export function sayuriProjectSubscriptionKey(projectId: string): string {
-  return PREFIX + Buffer.from(normalizedProjectId(projectId), "utf8").toString("base64url");
+  return (
+    PREFIX +
+    Buffer.from(normalizedProjectId(projectId), "utf8").toString("base64url")
+  );
 }
 
 export function subscribeSayuriProject(
