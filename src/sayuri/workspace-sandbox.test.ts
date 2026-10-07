@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
+import { realpathSync } from "node:fs";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { createSayuriExecutionController } from "./execution-control";
@@ -27,10 +28,7 @@ describe("Sayuri workspace sandbox policy", () => {
         backend: "seatbelt",
         reason: "test backend",
       });
-      const canonicalScopeRoot = (await realpath(scopeRoot)).replaceAll(
-        "\\",
-        "/",
-      );
+      const canonicalScopeRoot = realpathSync(scopeRoot).replaceAll("\\", "/");
       expect(result.sandbox?.root).toBe(canonicalScopeRoot);
       expect(result.sandbox?.isolationRoot).toBe(dirname(canonicalScopeRoot));
     } finally {
