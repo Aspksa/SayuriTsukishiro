@@ -379,14 +379,16 @@ jobs:
         run: bun run src/test-utils/headless-windows.ts --model sonnet-4.6-low
 
       - name: Publish dry-run
-        if: ${{ github.event_name == 'push' }}
+        # Imported Letta npm publication validation is upstream-only. Sayuri
+        # must never acquire package-publish authority from a normal main push.
+        if: ${{ github.event_name == 'push' && github.repository == 'letta-ai/letta-code' }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
           LETTA_API_KEY: dummy
         run: bun publish --dry-run
 
       - name: Pack (no auth available)
-        if: ${{ github.event_name != 'push' }}
+        if: ${{ github.event_name != 'push' || github.repository != 'letta-ai/letta-code' }}
         run: bun pm pack
 
   node18-smoke:
