@@ -42,7 +42,10 @@
   },
   "release_gate": {
     "status": "pending_ci",
-    "validation_head": "pending"
+    "validation_head": "pending",
+    "repairs": [
+      "subagent lease creation now validates explicit historical fixtures relative to issuedAt while runtime binding still validates against live now"
+    ]
   },
   "completed_tasks": [
     "dev-fastpath-v1",

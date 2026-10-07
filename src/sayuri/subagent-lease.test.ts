@@ -56,6 +56,31 @@ describe("Sayuri subagent capability leases", () => {
     ).not.toThrow();
   });
 
+
+  test("creation validates expiry relative to the explicit issuedAt timestamp", () => {
+    const lease = createSayuriSubagentCapabilityLease({
+      id: "lease-historical-fixture",
+      parentTaskId: "parent-task",
+      parentPlanId: "parent-plan",
+      parentStepId: "delegate",
+      subagentId: "child-historical",
+      subagentType: "general-purpose",
+      allowedTools: ["Read"],
+      scopeRoot: "/workspace",
+      issuedAt: "2026-10-06T11:40:00.000Z",
+      expiresAt: "2026-10-06T11:41:00.000Z",
+    });
+    expect(lease.expiresAt).toBe("2026-10-06T11:41:00.000Z");
+    expect(() =>
+      assertSayuriSubagentLeaseBinding({
+        lease,
+        task: runningTask(),
+        plan,
+        now: "2026-10-06T11:42:00.000Z",
+      }),
+    ).toThrow("expired");
+  });
+
   test("rejects mutation authority from a read-only lease", () => {
     expect(() =>
       createSayuriSubagentCapabilityLease({

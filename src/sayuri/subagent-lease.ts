@@ -53,7 +53,7 @@ export function createSayuriSubagentCapabilityLease(input: {
     issuedAt: input.issuedAt ?? new Date().toISOString(),
     ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
   };
-  validateSayuriSubagentCapabilityLease(lease);
+  validateSayuriSubagentCapabilityLease(lease, lease.issuedAt);
   return lease;
 }
 
