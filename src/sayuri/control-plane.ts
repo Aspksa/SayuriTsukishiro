@@ -16,7 +16,10 @@ import {
   type SayuriBrainStateSnapshot,
   type SayuriBrainStateStore,
 } from "./state-store";
-import { transitionSayuriTask, type SayuriTaskState } from "./task-lifecycle";
+import {
+  type SayuriTaskState,
+  transitionSayuriTask,
+} from "./task-lifecycle";
 import {
   FileSayuriTaskRegistry,
   ProjectIndexedSayuriBrainStateStore,

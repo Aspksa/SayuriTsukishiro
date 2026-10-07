@@ -83,7 +83,8 @@ export class SayuriCognitiveStateClient {
     project: string,
     listener: SayuriCognitiveStateListener,
   ): Promise<() => Promise<void>> {
-    if (this.#closed) throw new Error("Sayuri cognitive state client is closed.");
+    if (this.#closed)
+      throw new Error("Sayuri cognitive state client is closed.");
     const id = projectId(project);
     let entry = this.#projects.get(id);
     if (!entry) {
@@ -200,7 +201,9 @@ export class SayuriCognitiveStateClient {
           );
         }
       } catch (error) {
-        failures.push(error instanceof Error ? error : new Error(String(error)));
+        failures.push(
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     }
     if (failures.length > 0) {

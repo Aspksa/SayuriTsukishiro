@@ -1,7 +1,7 @@
 import { Box, useInput } from "ink";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { SayuriCognitiveControlSnapshot } from "@/sayuri/control-plane";
 import type { SayuriCognitiveStateClient } from "@/sayuri/cognitive-state-client";
+import type { SayuriCognitiveControlSnapshot } from "@/sayuri/control-plane";
 import { Text } from "./Text";
 
 const TERMINAL_TASK_STATUSES = new Set(["completed", "failed", "cancelled"]);
@@ -15,14 +15,12 @@ export interface SayuriCognitiveControlPanelProps {
 }
 
 export interface SayuriCognitiveControlView {
-  task:
-    | {
-        id: string;
-        goal: string;
-        status: string;
-        revision: number;
-      }
-    | null;
+  task: {
+    id: string;
+    goal: string;
+    status: string;
+    revision: number;
+  } | null;
   planSteps: Array<{
     id: string;
     title: string;
@@ -63,9 +61,7 @@ export function buildSayuriCognitiveControlView(
       status: step.status,
     })),
     activeBackground: snapshot.background
-      .filter((item) =>
-        ["leased", "running", "orphaned"].includes(item.status),
-      )
+      .filter((item) => ["leased", "running", "orphaned"].includes(item.status))
       .slice(0, visible)
       .map((item) => ({
         id: item.id,

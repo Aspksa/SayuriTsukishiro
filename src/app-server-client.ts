@@ -541,7 +541,8 @@ export class AppServerClient {
       {
         type: "sayuri_state_get",
         ...command,
-        request_id: command.request_id ?? this.nextRequestId("sayuri-state-get"),
+        request_id:
+          command.request_id ?? this.nextRequestId("sayuri-state-get"),
       },
       {
         ...options,
